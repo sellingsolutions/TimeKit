@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using TimeKit.DataStructure;
 using System.Linq;
+using TimeKit.Models;
 
 namespace TimeKit.Scheduling
 {
@@ -23,9 +24,23 @@ namespace TimeKit.Scheduling
                 return null;
 
             var actors = request.AvailableActors.Where(o => o.Capabilities.Contains(request.RequiredCapability));
-            var responses = actors.Select(actor => request.Run(actor)).Where(r => r != null).ToList();
-            var row = new TKResourceRequestRow(request, responses);
+            var responses = new List<TKResourceResponse>();
+            foreach (var actor in actors)
+            {
+                var processes = request.AvailableProcesses.Where(p => p.ParticipantId == actor.Key);
+                if (!processes.Any())
+                    continue;
 
+                var requestRunner = new TKResourceRequestRunner(request, actor, processes);
+                var response = requestRunner.Run();
+
+                if (response == null)
+                    continue;
+                
+                responses.Add(response);
+            }
+
+            var row = new TKResourceRequestRow(request, responses);
             return row;
         }
 
