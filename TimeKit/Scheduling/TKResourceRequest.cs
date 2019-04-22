@@ -63,11 +63,6 @@ namespace TimeKit.Scheduling
                    WeekNumbers.Any();
         }
 
-        public TKResourceResponse Run(TkActor actor)
-        {
-            var runner = new TKResourceRequestRunner(this, actor);
-            var response = runner.Run();
-            return response;
-        }
+        
     }
 }
