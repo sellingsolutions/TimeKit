@@ -27,18 +27,18 @@ namespace TimeKit.DataStructure
         {
             IsNull = intervals.Length == 0;
             Id = Guid.NewGuid().ToString();
-            _intervals = intervals;
+            _intervals = intervals.OrderBy(o => o.min).ToArray();
         }
 
-        public Interval[]  GetIntervals()
+        public Interval[]  GetOrderedIntervals()
         {
-            return _intervals;
+            return _intervals.OrderBy(o=>o.min).ToArray();
         }
 
         public TimeSet Copy()
         {
             var copy = new Interval[_intervals.Length];
-            for (int i=0;i<_intervals.Length;i++)
+            for (var i=0;i<_intervals.Length;i++)
             {
                 var interval = _intervals[i];
                 copy[i] = new Interval(interval.min, interval.max);
@@ -81,7 +81,7 @@ namespace TimeKit.DataStructure
         
         public Interval ExtractInterval(TimeSpan timeSpan)
         {
-            var orderedIntervals = _intervals.OrderBy(o => o.min);
+            var orderedIntervals = GetOrderedIntervals();
             var intervalToExtractFrom = orderedIntervals.FirstOrDefault(o => o.Length() > timeSpan);
 
             if (intervalToExtractFrom.isNull)
@@ -90,7 +90,7 @@ namespace TimeKit.DataStructure
             }
 
             var index = indexOf(intervalToExtractFrom);
-            Interval extractedInterval = new Interval();
+            var extractedInterval = new Interval();
 
             if (index != -1)
             {
@@ -120,7 +120,7 @@ namespace TimeKit.DataStructure
 
         public void Remove(Interval interval)
         {
-            _intervals = _intervals.ToList().Where(o => o.id != interval.id).ToArray();
+            _intervals = _intervals.Where(o => o.id != interval.id).ToArray();
         }
 
         public int indexOf(Interval interval)
@@ -130,7 +130,7 @@ namespace TimeKit.DataStructure
                 return -1;
             }
 
-            for (int i=0; i<_intervals.Count(); i++)
+            for (var i=0; i<_intervals.Count(); i++)
             {
                 var _interval = _intervals[i];
                 if (_interval.id == interval.id)
@@ -174,14 +174,7 @@ namespace TimeKit.DataStructure
             }
             return set;
         }
-
-
-        // assumes intervals not overlapping!
-        public static TimeSet For(IEnumerable<Tuple<DateTime, DateTime>> intervals)
-        {
-            var intvals = intervals.OrderBy(o => o.Item1).Select(o => new Interval(o.Item1, o.Item2)).ToArray();
-            return new TimeSet (intvals);
-        }
+        
 
         private static DateTime Min(DateTime a, DateTime b) => a < b ? a : b;
 
@@ -214,38 +207,56 @@ namespace TimeKit.DataStructure
                     }
                     else
                     {
-                        yield return new Interval(Max(aInterval.min, bInterval.min), Min(aInterval.max, bInterval.max));
+                        yield return new Interval(
+                            Max(aInterval.min, bInterval.min), 
+                            Min(aInterval.max, bInterval.max));
+
                         if (aInterval < bInterval) aIndex++;
                         else bIndex++;
                     }
                 }
             }
-            return new TimeSet ( intersect(first, second).ToArray() );
+
+            var intersection = intersect(first, second).ToArray();
+            return new TimeSet ( intersection );
         }
 
+        // The complement of B, ∁B. Is everything that's outside of B
+        // TODO: The complement comes out backwards, [ startsAt: 17th of April -> endsAt: 16th of April ]
         public static TimeSet Complement(TimeSet set)
         {
             IEnumerable<Interval> complement(TimeSet s)
             {
-                DateTime t0 = DateTime.MinValue;
-                foreach (var interval in s._intervals)
+                var t0 = DateTime.MinValue;
+                foreach (var interval in s.GetOrderedIntervals())
                 {
                     var t1 = interval.min;
                     if ((t0 - t1).Ticks != 0)
-                        yield return new Interval ( t0, t1 );
+                    {
+                        var complementInterval = new Interval(t0, t1);
+                        yield return complementInterval;
+                    }
                     t0 = interval.max;
                 }
+
                 if ((DateTime.MaxValue - t0).Ticks != 0)
                 {
-                    yield return new Interval (t0, DateTime.MaxValue);
+                    var lastInterval = new Interval(t0, DateTime.MaxValue);
+                    yield return lastInterval;
                 }
             }
-            return new TimeSet (complement(set).ToArray());
+
+            var complementSet = complement(set).ToArray();
+            return new TimeSet (complementSet);
         }
 
+        // A - B equals the intersection between A and the complement of B
         public static TimeSet Difference(TimeSet a, TimeSet b)
         {
-            return Intersect(a, Complement(b));
+            // A - B = A ∩ ∁B
+            var bComplement = Complement(b);
+            var diff = Intersect(a, bComplement);
+            return diff;
         }
 
         // Does not join overlapping intervals

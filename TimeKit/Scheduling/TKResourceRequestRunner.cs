@@ -111,7 +111,8 @@ namespace TimeKit.Scheduling
         {
             var busyTs = new TimeSet(
                 Busy.Where(o=>o.StartsAt.HasValue && o.EndsAt.HasValue)
-                    .Where(o => DateTimeExtensions.WeekNumber(o.StartsAt.Value) == weekNumber)
+                    .Where(o => DateTimeExtensions.WeekNumber(o.StartsAt.Value) == weekNumber &&
+                                DateTimeExtensions.WeekNumber(o.EndsAt.Value) == weekNumber)
                     .Select(o => new Interval(o.StartsAt.Value, o.EndsAt.Value))
                     .ToArray());
             return busyTs;
