@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TimeKit.DataStructure;
 using TimeKit.Models;
 using System.Linq;
+using TimeKit.Extensions;
 
 namespace TimeKit.Scheduling
 {
@@ -24,9 +25,12 @@ namespace TimeKit.Scheduling
         public TkActor Actor { get; set; }
         public IEnumerable<TkIProcess> Busy { get; set; }
 
-        public TKResourceRequestRunner(TkResourceRequest request, TkActor actor)
+        public TKResourceRequestRunner(
+            TkResourceRequest request, 
+            TkActor actor,
+            IEnumerable<TkProcess> processes)
         {
-            RoleType             = request.RoleType;
+            RoleType                = request.RoleType;
             RequiredCapability      = request.RequiredCapability;
             ObjectType              = request.ObjectType;
             NoOfObjects             = request.NoOfObjects;
@@ -34,24 +38,24 @@ namespace TimeKit.Scheduling
             WeekNumbers             = request.WeekNumbers;
 
             Actor = actor;
-            Busy = request.AvailableProcesses;
+            Busy = processes;
         }
         
         public TKResourceResponse Run()
         {
-            var busy = GetBusyTimeSet();
-            var vacancy = GetVacancy();
+            var totalBusy = GetTotalBusy();
+            var totalVacancy = GetTotalVacancy();
 
-            var totalTicksVacant = vacancy.Ticks();
+            var totalTicksVacant = totalVacancy.Ticks();
 
             if (TotalTicksNeeded >= totalTicksVacant)
                 return null;
 
-            var schedule = TryScheduling(vacancy, NoOfObjects, TimeSpanPerObject);
+            var schedule = TryScheduling(totalVacancy, NoOfObjects, TimeSpanPerObject);
             if (schedule.IsNull)
                 return null;
 
-            return new TKResourceResponse(Actor, busy, vacancy, schedule);
+            return new TKResourceResponse(Actor, totalBusy, totalVacancy, schedule);
         }
 
         private TimeSet TryScheduling(TimeSet vacancy, long noOfObjects, TimeSpan spanPerObject)
@@ -75,24 +79,41 @@ namespace TimeKit.Scheduling
         private TimeSet GetVacancy(long weekNumber)
         {
             var workWeekTs = TimeSet.WorkWeek(weekNumber);
-            var busyTs = GetBusyTimeSet();
+            var busyTs = GetBusy(weekNumber);
             var vacancy = TimeSet.Difference(workWeekTs, busyTs);
             return vacancy;
         }
 
-        private TimeSet GetVacancy()
+        private TimeSet GetTotalVacancy()
         {
-            TimeSet vacancy = new TimeSet();
+            var vacancy = new TimeSet();
             foreach (var wNo in WeekNumbers)
             {
-                TimeSet.Union(vacancy, GetVacancy(wNo));
+                var weekVacancy = GetVacancy(wNo);
+                vacancy = TimeSet.Union(vacancy, weekVacancy);
             }
+
             return vacancy;
         }
 
-        private TimeSet GetBusyTimeSet()
+        public TimeSet GetTotalBusy()
         {
-            var busyTs = new TimeSet(Busy.Select(o => new Interval(o.StartsAt.Value, o.EndsAt.Value)).ToArray());
+            var busy = new TimeSet();
+            foreach (var wNo in WeekNumbers)
+            {
+                var weekBusy = GetBusy(wNo);
+                busy = TimeSet.Union(busy, weekBusy);
+            }
+            return busy;
+        }
+
+        private TimeSet GetBusy(long weekNumber)
+        {
+            var busyTs = new TimeSet(
+                Busy.Where(o=>o.StartsAt.HasValue && o.EndsAt.HasValue)
+                    .Where(o => DateTimeExtensions.WeekNumber(o.StartsAt.Value) == weekNumber)
+                    .Select(o => new Interval(o.StartsAt.Value, o.EndsAt.Value))
+                    .ToArray());
             return busyTs;
         }
     }
