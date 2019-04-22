@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace TimeKit.Models
 {
-    public interface IActor
+    public interface TkIRoleType
     {
         string Key { get; set; }
-        IEnumerable<ICapability> Capabilities { get; set; }
+        string Name { get; set; }
     }
 }

@@ -1,17 +1,32 @@
 ﻿using System.Collections.Generic;
 using TimeKit.DataStructure;
+using System.Linq;
 
 namespace TimeKit.Scheduling
 {
     public class TKResourceRequestRow
     {
-        public TKResourceRequest Request { get; set; }
+        public TKResourceRequestGroup Group { get; set; }
+
+        public TkResourceRequest Request { get; set; }
         public List<TKResourceResponse> Responses { get; set; }
 
-        public TKResourceRequestRow(TKResourceRequest request, List<TKResourceResponse> responses)
+        public TKResourceRequestRow(TkResourceRequest request, List<TKResourceResponse> responses)
         {
             Request = request;
             Responses = responses;
+        }
+
+        public static TKResourceRequestRow CreateRow(TkResourceRequest request)
+        {
+            if (!request.IsValid())
+                return null;
+
+            var actors = request.AvailableActors.Where(o => o.Capabilities.Contains(request.RequiredCapability));
+            var responses = actors.Select(actor => request.Run(actor)).Where(r => r != null).ToList();
+            var row = new TKResourceRequestRow(request, responses);
+
+            return row;
         }
 
         // We probably need a depth first search where we find compatible nodes and switch branch on failure

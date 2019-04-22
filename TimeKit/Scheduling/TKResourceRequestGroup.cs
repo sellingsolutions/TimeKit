@@ -23,6 +23,12 @@ namespace TimeKit.Scheduling
 
         public List<TKResourceRequestRow> Rows { get; set; } = new List<TKResourceRequestRow>();
 
+        public void AddRow(TKResourceRequestRow row)
+        {
+            row.Group = this;
+            Rows.Add(row);
+        }
+
         public List<((TKResourceRequestRow row, TKResourceResponse res), 
             (TKResourceRequestRow row, TKResourceResponse res))> FindCompatibleRows ()
         {

@@ -8,6 +8,12 @@ namespace TimeKit.Models
         public string Key { get; set; }
         public string Name { get; set; }
 
+        public Capability(string key, string name)
+        {
+            Key = key;
+            Name = name;
+        }
+
         public override bool Equals(object obj)
         {
             return Name == ((ICapability)obj).Name;

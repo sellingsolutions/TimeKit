@@ -5,31 +5,36 @@ using TimeKit.Models;
 
 namespace TimeKit.Scheduling
 {
-    public class TKResourceRequest
+    public class TkResourceRequest
     {
-        public IRole Role { get; set; }
+        public TkIRoleType TkIRoleType { get; set; }
         public ICapability RequiredCapability { get; set; }
         public IObjectType ObjectType { get; set; }
         public long NoOfObjects { get; set; }
         public long MinutesRequiredPerObject { get; set; }
         public List<long> WeekNumbers { get; set; }
 
-        public List<IActor> AvailableActors { get; set; }
-        public List<IProcess> AvailableProcesses { get; set; }
+        public IEnumerable<TkIActor> AvailableActors { get; set; }
+        public IEnumerable<TkIProcess> AvailableProcesses { get; set; }
 
         public TimeSpan TicksRequired => TimeSpan.FromMinutes(MinutesRequiredPerObject * NoOfObjects);
 
-        public TKResourceRequest(
-            IRole role, 
+        public TkResourceRequest()
+        {
+
+        }
+
+        public TkResourceRequest(
+            TkIRoleType tkIRoleType, 
             ICapability capability, 
             IObjectType objectType, 
             long noOfObjects, 
             long minutesRequiredPerObject,
             List<long> weekNumbers,
-            List<IActor> availableActors,
-            List<IProcess> availableProcesses)
+            IEnumerable<TkIActor> availableActors,
+            IEnumerable<TkIProcess> availableProcesses)
         {
-            Role = role;
+            TkIRoleType = tkIRoleType;
             RequiredCapability = capability;
             ObjectType = objectType;
             NoOfObjects = noOfObjects;
@@ -44,7 +49,7 @@ namespace TimeKit.Scheduling
         {
             if (AvailableActors == null ||
                 AvailableProcesses == null ||
-                Role == null ||
+                TkIRoleType == null ||
                 RequiredCapability == null ||
                 NoOfObjects == 0 || 
                 MinutesRequiredPerObject == 0 || 
@@ -52,15 +57,11 @@ namespace TimeKit.Scheduling
             {
                 return false;
             }
-            if (!WeekNumbers.Any())
-            {
-                return false;
-            }
 
-            return true;
+            return WeekNumbers.Any();
         }
 
-        public TKResourceResponse Run(IActor actor)
+        public TKResourceResponse Run(TkIActor actor)
         {
             var runner = new TKResourceRequestRunner(this, actor);
             return runner.Run();

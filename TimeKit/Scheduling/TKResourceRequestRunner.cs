@@ -10,7 +10,7 @@ namespace TimeKit.Scheduling
 {
     public class TKResourceRequestRunner
     {
-        public IRole Role { get; set; }
+        public TkIRoleType TkIRoleType { get; set; }
         public ICapability RequiredCapability { get; set; }
         public IObjectType ObjectType { get; set; }
 
@@ -21,12 +21,12 @@ namespace TimeKit.Scheduling
         public List<long> WeekNumbers { get; set; }
 
         // The resource and its busy processes..
-        public IActor Actor { get; set; }
-        public IEnumerable<IProcess> Busy { get; set; }
+        public TkIActor Actor { get; set; }
+        public IEnumerable<TkIProcess> Busy { get; set; }
 
-        public TKResourceRequestRunner(TKResourceRequest request, IActor actor)
+        public TKResourceRequestRunner(TkResourceRequest request, TkIActor actor)
         {
-            Role                    = request.Role;
+            TkIRoleType                    = request.TkIRoleType;
             RequiredCapability      = request.RequiredCapability;
             ObjectType              = request.ObjectType;
             NoOfObjects             = request.NoOfObjects;
