@@ -22,7 +22,7 @@ namespace TimeKit.Scheduling
             if (!request.IsValid())
                 return null;
 
-            var actors = request.AvailableActors.Where(o => o.Capabilities.Contains(request.RequiredCapability));
+            var actors = request.AvailableActors.Where(o => o.Capabilities.Contains(request.RequiredTkICapability));
             var responses = actors.Select(actor => request.Run(actor)).Where(r => r != null).ToList();
             var row = new TKResourceRequestRow(request, responses);
 

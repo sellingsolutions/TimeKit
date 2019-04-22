@@ -11,8 +11,8 @@ namespace TimeKit.Scheduling
     public class TKResourceRequestRunner
     {
         public TkIRoleType TkIRoleType { get; set; }
-        public ICapability RequiredCapability { get; set; }
-        public IObjectType ObjectType { get; set; }
+        public TkICapability RequiredTkICapability { get; set; }
+        public TkIObjectType TkIObjectType { get; set; }
 
         public long NoOfObjects { get; set; }
         public TimeSpan TimeSpanPerObject { get; set; }
@@ -26,9 +26,9 @@ namespace TimeKit.Scheduling
 
         public TKResourceRequestRunner(TkResourceRequest request, TkIActor actor)
         {
-            TkIRoleType                    = request.TkIRoleType;
-            RequiredCapability      = request.RequiredCapability;
-            ObjectType              = request.ObjectType;
+            TkIRoleType             = request.TkIRoleType;
+            RequiredTkICapability      = request.RequiredTkICapability;
+            TkIObjectType              = request.TkIObjectType;
             NoOfObjects             = request.NoOfObjects;
             TimeSpanPerObject       = TimeSpan.FromMinutes(request.MinutesRequiredPerObject);
             WeekNumbers             = request.WeekNumbers;

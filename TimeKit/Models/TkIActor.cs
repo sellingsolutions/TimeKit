@@ -10,6 +10,6 @@ namespace TimeKit.Models
         string Key { get; set; }
         string DisplayName { get; set; }
 
-        IEnumerable<ICapability> Capabilities { get; set; }
+        IEnumerable<TkICapability> Capabilities { get; set; }
     }
 }

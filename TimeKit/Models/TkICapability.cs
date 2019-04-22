@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace TimeKit.Models
 {
-    public interface ICapability: IEqualityComparer
+    public interface TkICapability: IEqualityComparer
     {
         string Key { get; set; }
         string Name { get; set; }

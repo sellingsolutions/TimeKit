@@ -3,12 +3,12 @@ using System.Collections;
 
 namespace TimeKit.Models
 {
-    public class Capability : ICapability
+    public class TkCapability : TkICapability
     {
         public string Key { get; set; }
         public string Name { get; set; }
 
-        public Capability(string key, string name)
+        public TkCapability(string key, string name)
         {
             Key = key;
             Name = name;
@@ -16,7 +16,7 @@ namespace TimeKit.Models
 
         public override bool Equals(object obj)
         {
-            return Name == ((ICapability)obj).Name;
+            return Name == ((TkCapability)obj).Name;
         }
 
         public override int GetHashCode()
@@ -31,12 +31,12 @@ namespace TimeKit.Models
 
         bool IEqualityComparer.Equals(object x, object y)
         {
-            return ((ICapability)x).Name == ((ICapability)y).Name;
+            return ((TkCapability)x).Name == ((TkCapability)y).Name;
         }
 
         int IEqualityComparer.GetHashCode(object obj)
         {
-            return Convert.ToInt32(((ICapability)obj).Key);
+            return Convert.ToInt32(((TkCapability)obj).Key);
         }
     }
 }

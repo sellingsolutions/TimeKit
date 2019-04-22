@@ -8,8 +8,8 @@ namespace TimeKit.Scheduling
     public class TkResourceRequest
     {
         public TkIRoleType TkIRoleType { get; set; }
-        public ICapability RequiredCapability { get; set; }
-        public IObjectType ObjectType { get; set; }
+        public TkICapability RequiredTkICapability { get; set; }
+        public TkIObjectType TkIObjectType { get; set; }
         public long NoOfObjects { get; set; }
         public long MinutesRequiredPerObject { get; set; }
         public List<long> WeekNumbers { get; set; }
@@ -26,8 +26,8 @@ namespace TimeKit.Scheduling
 
         public TkResourceRequest(
             TkIRoleType tkIRoleType, 
-            ICapability capability, 
-            IObjectType objectType, 
+            TkICapability tkICapability, 
+            TkIObjectType tkIObjectType, 
             long noOfObjects, 
             long minutesRequiredPerObject,
             List<long> weekNumbers,
@@ -35,8 +35,8 @@ namespace TimeKit.Scheduling
             IEnumerable<TkIProcess> availableProcesses)
         {
             TkIRoleType = tkIRoleType;
-            RequiredCapability = capability;
-            ObjectType = objectType;
+            RequiredTkICapability = tkICapability;
+            TkIObjectType = tkIObjectType;
             NoOfObjects = noOfObjects;
             MinutesRequiredPerObject = minutesRequiredPerObject;
             WeekNumbers = weekNumbers;
@@ -50,7 +50,7 @@ namespace TimeKit.Scheduling
             if (AvailableActors == null ||
                 AvailableProcesses == null ||
                 TkIRoleType == null ||
-                RequiredCapability == null ||
+                RequiredTkICapability == null ||
                 NoOfObjects == 0 || 
                 MinutesRequiredPerObject == 0 || 
                 WeekNumbers == null)
