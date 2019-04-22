@@ -49,11 +49,22 @@ namespace TimeKit.DataStructure
 
         public int Count()
         {
+            if (IsEmpty())
+                return 0;
+
             return _intervals.Count();
+        }
+
+        public bool IsEmpty()
+        {
+            return _intervals == null || !_intervals.Any();
         }
 
         public long Ticks ()
         {
+            if (IsEmpty())
+                return 0;
+
             var ticks = _intervals.Sum(interval => interval.Length().Ticks);
             return ticks;
         }
@@ -241,24 +252,29 @@ namespace TimeKit.DataStructure
         // if an interval in A already contains the space made up by an interval in B, it'll be ignored
         public static TimeSet Union(TimeSet a, TimeSet b)
         {
+            if (b.IsNull || b.IsEmpty())
+                return a;
+            if (a.IsNull || a.IsEmpty())
+                return b;
+
             // The size of the union between a and b will at max be a.count + b.count
             var union = new Interval[a.Count() + b.Count()];
             var unionIndex = a.Count();
 
             // Set the union equal to A
-            for (int i = 0; i < a._intervals.Length; i++)
+            for (var i = 0; i < a._intervals.Length; i++)
             {
                 union[i] = a._intervals[i];
             }
             
             // Only insert intervals from B into the union
             // if no interval in A claims that space 
-            for (int i = 0; i < b._intervals.Length; i++)
+            for (var i = 0; i < b._intervals.Length; i++)
             {
                 var bInterval = b._intervals[i];
                 var exists = false;
 
-                for(int j=0; j < a._intervals.Length;j++)
+                for(var j=0; j < a._intervals.Length;j++)
                 {
                     var aInterval = a._intervals[j];
                     if (aInterval.Contains(bInterval))
@@ -282,7 +298,7 @@ namespace TimeKit.DataStructure
         {
             if (a._intervals.Length != b._intervals.Length)
                 return false;
-            for (int i = 0; i < a._intervals.Length; i++)
+            for (var i = 0; i < a._intervals.Length; i++)
             {
                 var aInterval = a._intervals[i];
                 var bInterval = b._intervals[i];
@@ -300,9 +316,8 @@ namespace TimeKit.DataStructure
 
         public override bool Equals(object obj)
         {
-            if (obj is TimeSet)
+            if (obj is TimeSet ts)
             {
-                var ts = (TimeSet)obj;
                 return Id == ts.Id;
             }
             else
