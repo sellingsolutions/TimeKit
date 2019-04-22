@@ -7,15 +7,15 @@ namespace TimeKit.Scheduling
 {
     public class TkResourceRequest
     {
-        public TkIRoleType TkIRoleType { get; set; }
-        public TkICapability RequiredTkICapability { get; set; }
-        public TkIObjectType TkIObjectType { get; set; }
+        public TkIRoleType RoleType { get; set; }
+        public TkICapability RequiredCapability { get; set; }
+        public TkIObjectType ObjectType { get; set; }
         public long NoOfObjects { get; set; }
         public long MinutesRequiredPerObject { get; set; }
         public List<long> WeekNumbers { get; set; }
 
-        public IEnumerable<TkIActor> AvailableActors { get; set; }
-        public IEnumerable<TkIProcess> AvailableProcesses { get; set; }
+        public List<TkActor> AvailableActors { get; set; }
+        public List<TkProcess> AvailableProcesses { get; set; }
 
         public TimeSpan TicksRequired => TimeSpan.FromMinutes(MinutesRequiredPerObject * NoOfObjects);
 
@@ -25,18 +25,18 @@ namespace TimeKit.Scheduling
         }
 
         public TkResourceRequest(
-            TkIRoleType tkIRoleType, 
-            TkICapability tkICapability, 
-            TkIObjectType tkIObjectType, 
+            TkIRoleType roleType, 
+            TkICapability capability, 
+            TkIObjectType objectType, 
             long noOfObjects, 
             long minutesRequiredPerObject,
             List<long> weekNumbers,
-            IEnumerable<TkIActor> availableActors,
-            IEnumerable<TkIProcess> availableProcesses)
+            List<TkActor> availableActors,
+            List<TkProcess> availableProcesses)
         {
-            TkIRoleType = tkIRoleType;
-            RequiredTkICapability = tkICapability;
-            TkIObjectType = tkIObjectType;
+            RoleType = roleType;
+            RequiredCapability = capability;
+            ObjectType = objectType;
             NoOfObjects = noOfObjects;
             MinutesRequiredPerObject = minutesRequiredPerObject;
             WeekNumbers = weekNumbers;
@@ -49,8 +49,8 @@ namespace TimeKit.Scheduling
         {
             if (AvailableActors == null ||
                 AvailableProcesses == null ||
-                TkIRoleType == null ||
-                RequiredTkICapability == null ||
+                RoleType == null ||
+                RequiredCapability == null ||
                 NoOfObjects == 0 || 
                 MinutesRequiredPerObject == 0 || 
                 WeekNumbers == null)
@@ -58,13 +58,16 @@ namespace TimeKit.Scheduling
                 return false;
             }
 
-            return WeekNumbers.Any();
+            return AvailableActors.Any() && 
+                   AvailableProcesses.Any() && 
+                   WeekNumbers.Any();
         }
 
-        public TKResourceResponse Run(TkIActor actor)
+        public TKResourceResponse Run(TkActor actor)
         {
             var runner = new TKResourceRequestRunner(this, actor);
-            return runner.Run();
+            var response = runner.Run();
+            return response;
         }
     }
 }
