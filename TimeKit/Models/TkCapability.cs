@@ -21,7 +21,7 @@ namespace TimeKit.Models
 
         public override int GetHashCode()
         {
-            return Convert.ToInt32(Key);
+            return Key.GetHashCode();
         }
 
         public override string ToString()
@@ -36,7 +36,7 @@ namespace TimeKit.Models
 
         int IEqualityComparer.GetHashCode(object obj)
         {
-            return Convert.ToInt32(((TkCapability)obj).Key);
+            return ((TkCapability) obj).Key.GetHashCode();
         }
     }
 }
