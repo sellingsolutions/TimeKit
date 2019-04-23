@@ -78,7 +78,44 @@ namespace TimeKit.DataStructure
         { 
             return Seconds() / 60;
         }
-        
+
+        public void Remove(Interval interval)
+        {
+            _intervals = _intervals.Where(o => o.id != interval.id).ToArray();
+        }
+
+        public Interval ElementAt(int index)
+        {
+            if (index >= Count())
+                return Interval.Null();
+
+            return _intervals[index];
+        }
+
+        public int indexOf(Interval interval)
+        {
+            if (string.IsNullOrEmpty(interval.id))
+            {
+                return -1;
+            }
+
+            for (var i = 0; i < _intervals.Count(); i++)
+            {
+                var _interval = _intervals[i];
+                if (_interval.id == interval.id)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        public override string ToString()
+        {
+            return "{ " + string.Join("; ", _intervals.Select(o => $"[{o.min}, {o.max}]")) + " }";
+        }
+
         public Interval ExtractInterval(TimeSpan timeSpan)
         {
             var orderedIntervals = GetOrderedIntervals();
@@ -117,36 +154,7 @@ namespace TimeKit.DataStructure
 
             return extractedInterval;
         }
-
-        public void Remove(Interval interval)
-        {
-            _intervals = _intervals.Where(o => o.id != interval.id).ToArray();
-        }
-
-        public int indexOf(Interval interval)
-        {
-            if (string.IsNullOrEmpty(interval.id))
-            {
-                return -1;
-            }
-
-            for (var i=0; i<_intervals.Count(); i++)
-            {
-                var _interval = _intervals[i];
-                if (_interval.id == interval.id)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
-        public override string ToString()
-        {
-            return "{ " + string.Join("; ", _intervals.Select(o => $"[{o.min}, {o.max}]")) + " }";
-        }
-
+    
         public static TimeSet For(DateTime min, DateTime max)
         {
             return new TimeSet (new Interval[] { new Interval ( min, max ) });
@@ -159,12 +167,16 @@ namespace TimeKit.DataStructure
             return For(min, max);
         }
 
+        private static DateTime Min(DateTime a, DateTime b) => a < b ? a : b;
+
+        private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
+
         // Returns 45 hours since we're not excluding the lunch hour
         public static TimeSet WorkWeek(long weekNumber)
         {
             var set = new TimeSet ( new Interval[5] );
             var day = DateTimeExtensions.GetFirstDayOfWeek(weekNumber);
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < 5; i++)
             {
                 var startsAt = DateTime.SpecifyKind(new DateTime(day.Year, day.Month, day.Day, 6, 0, 0), DateTimeKind.Utc);
                 var endsAt = DateTime.SpecifyKind(new DateTime(day.Year, day.Month, day.Day, 15, 0, 0), DateTimeKind.Utc);
@@ -174,42 +186,43 @@ namespace TimeKit.DataStructure
             }
             return set;
         }
-        
-
-        private static DateTime Min(DateTime a, DateTime b) => a < b ? a : b;
-
-        private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
 
         public static TimeSet Intersect(TimeSet first, TimeSet second)
         {
             IEnumerable<Interval> intersect(TimeSet a, TimeSet b)
             {
                 int aIndex = 0, bIndex = 0;
-                while (aIndex < a._intervals.Length &&
-                       bIndex < b._intervals.Length)
+                while (aIndex < a.Count() &&
+                       bIndex < b.Count())
                 {
-                    var aInterval = a._intervals[aIndex];
-                    var bInterval = b._intervals[bIndex];
+                    var aInterval = a.ElementAt(aIndex);
+                    var bInterval = b.ElementAt(bIndex);
+                    
+                    // If A doesn't contain B
                     if (!aInterval.Overlaps(bInterval))
                     {
                         if (aInterval < bInterval) aIndex++;
                         else bIndex++;
                     }
+                    // If A contains B, return B
                     else if (aInterval.Encloses(bInterval))
                     {
                         yield return bInterval;
                         bIndex++;
                     }
+                    // If B contains A, return A
                     else if (bInterval.Encloses(aInterval))
                     {
                         yield return aInterval;
                         aIndex++;
                     }
+                    // If A and B are separate intervals
                     else
                     {
-                        yield return new Interval(
-                            Max(aInterval.min, bInterval.min), 
-                            Min(aInterval.max, bInterval.max));
+                        var highestMin = Max(aInterval.min, bInterval.min);
+                        var lowestMax = Min(aInterval.max, bInterval.max);
+
+                        yield return new Interval(highestMin, lowestMax); ; 
 
                         if (aInterval < bInterval) aIndex++;
                         else bIndex++;
