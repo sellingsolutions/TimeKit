@@ -62,7 +62,7 @@ namespace TimeKit.Scheduling
 
                     // Given the intersection of our two vacancies
                     // is there enough ticks between the two of us to work together?
-                    if (mutualSlots.Ticks() <= Request.TicksRequired.Ticks)
+                    if (mutualSlots.Ticks() >= Request.TicksRequired.Ticks)
                     {
                         compatible.Add(((this, response), (other, otherResponse)));
                     }
