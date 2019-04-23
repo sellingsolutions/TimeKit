@@ -25,9 +25,9 @@ namespace TimeKit.DataStructure
           
         public TimeSet(Interval[] intervals)
         {
-            IsNull = intervals.Length == 0;
-            Id = Guid.NewGuid().ToString();
-            _intervals = intervals.OrderBy(o => o.min).ToArray();
+            IsNull      = intervals.Length == 0;
+            Id          = Guid.NewGuid().ToString();
+            _intervals  = intervals.OrderBy(o => o.min).ToArray();
         }
 
         public Interval[]  GetOrderedIntervals()
@@ -99,9 +99,9 @@ namespace TimeKit.DataStructure
                 return -1;
             }
 
-            for (var i = 0; i < _intervals.Count(); i++)
+            for (var i = 0; i < Count(); i++)
             {
-                var _interval = _intervals[i];
+                var _interval = ElementAt(i);
                 if (_interval.id == interval.id)
                 {
                     return i;
@@ -123,7 +123,7 @@ namespace TimeKit.DataStructure
 
             if (intervalToExtractFrom.isNull)
             {
-                return new Interval();
+                return Interval.Null();
             }
 
             var index = indexOf(intervalToExtractFrom);
@@ -149,6 +149,7 @@ namespace TimeKit.DataStructure
                 else
                 {
                     _intervals[index] = updatedInterval;
+                    _intervals = GetOrderedIntervals();
                 }
             }
 
@@ -157,7 +158,7 @@ namespace TimeKit.DataStructure
     
         public static TimeSet For(DateTime min, DateTime max)
         {
-            return new TimeSet (new Interval[] { new Interval ( min, max ) });
+            return new TimeSet (new [] { new Interval ( min, max ) });
         }
 
         public static TimeSet ForWeek(long weekNumber)
@@ -187,6 +188,8 @@ namespace TimeKit.DataStructure
             return set;
         }
 
+        #region Set Operations
+
         public static TimeSet Intersect(TimeSet first, TimeSet second)
         {
             IEnumerable<Interval> intersect(TimeSet a, TimeSet b)
@@ -197,7 +200,7 @@ namespace TimeKit.DataStructure
                 {
                     var aInterval = a.ElementAt(aIndex);
                     var bInterval = b.ElementAt(bIndex);
-                    
+
                     // If A doesn't contain B
                     if (!aInterval.Overlaps(bInterval))
                     {
@@ -222,7 +225,9 @@ namespace TimeKit.DataStructure
                         var highestMin = Max(aInterval.min, bInterval.min);
                         var lowestMax = Min(aInterval.max, bInterval.max);
 
-                        yield return new Interval(highestMin, lowestMax); ; 
+                        var interval = new Interval(highestMin, lowestMax);
+                        if (interval.Length() > TimeSpan.Zero)
+                            yield return interval;
 
                         if (aInterval < bInterval) aIndex++;
                         else bIndex++;
@@ -231,11 +236,10 @@ namespace TimeKit.DataStructure
             }
 
             var intersection = intersect(first, second).ToArray();
-            return new TimeSet ( intersection );
+            return new TimeSet(intersection);
         }
 
         // The complement of B, ∁B. Is everything that's outside of B
-        // TODO: The complement comes out backwards, [ startsAt: 17th of April -> endsAt: 16th of April ]
         public static TimeSet Complement(TimeSet set)
         {
             IEnumerable<Interval> complement(TimeSet s)
@@ -260,7 +264,7 @@ namespace TimeKit.DataStructure
             }
 
             var complementSet = complement(set).ToArray();
-            return new TimeSet (complementSet);
+            return new TimeSet(complementSet);
         }
 
         // A - B equals the intersection between A and the complement of B
@@ -290,7 +294,7 @@ namespace TimeKit.DataStructure
             {
                 union[i] = a._intervals[i];
             }
-            
+
             // Only insert intervals from B into the union
             // if no interval in A claims that space 
             for (var i = 0; i < b._intervals.Length; i++)
@@ -298,7 +302,7 @@ namespace TimeKit.DataStructure
                 var bInterval = b._intervals[i];
                 var exists = false;
 
-                for(var j=0; j < a._intervals.Length;j++)
+                for (var j = 0; j < a._intervals.Length; j++)
                 {
                     var aInterval = a._intervals[j];
                     if (aInterval.Contains(bInterval))
@@ -317,6 +321,9 @@ namespace TimeKit.DataStructure
 
             return new TimeSet(union);
         }
+
+        #endregion
+
 
         public static bool operator ==(TimeSet a, TimeSet b)
         {

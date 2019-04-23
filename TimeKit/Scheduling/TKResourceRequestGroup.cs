@@ -27,27 +27,32 @@ namespace TimeKit.Scheduling
         {
             row.Group = this;
             Rows.Add(row);
+            row.no = Rows.Count();
         }
 
         public List<((TKResourceRequestRow row, TKResourceResponse res), 
             (TKResourceRequestRow row, TKResourceResponse res))> FindCompatibleRows ()
         {
-            // Each 
             var compatible = new List<((TKResourceRequestRow row, TKResourceResponse res), (TKResourceRequestRow row, TKResourceResponse res))>();
 
-            var row = Rows[0];
-            for (var j = 1; j < Rows.Count(); j++)
+            for (var i = 0; i < Rows.Count(); i++)
             {
-                var otherRow = Rows[j];
-
-                var compatibleResources = row.Compatible(otherRow);
-                compatible.AddRange(compatibleResources);
-
-                // If the current row is incompatible with any other row, we might as well abort immediately
-                if (!compatibleResources.Any())
+                var ri = Rows[i];
+                for (var j = 0; j < Rows.Count(); j++)
                 {
-                    // All the rows have to be compatible!
-                    return null;
+                    var rj = Rows[j];
+                    if (ri == rj)
+                        continue;
+                    
+                    var compatibleResources = ri.Compatible(rj);
+                    compatible.AddRange(compatibleResources);
+
+                    // If the current row is incompatible with any other row, we might as well abort immediately
+                    if (!compatibleResources.Any())
+                    {
+                        // All the rows have to be compatible!
+                        return null;
+                    }
                 }
             }
 

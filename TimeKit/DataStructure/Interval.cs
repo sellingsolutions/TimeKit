@@ -39,10 +39,12 @@ namespace TimeKit.DataStructure
             return point >= min && point <= max;
         }
 
-        // TODO: Why does other.Overlaps(this); lead to infinite recursion?
         public bool Overlaps(Interval other)
         {
-            return (Contains(other.min) || Contains(other.max));// || other.Overlaps(this);
+            // Does this interval contain the min or max of the other interval?
+            return (Contains(other.min) || Contains(other.max) ||
+                    // Does the other interval contain the min or max of this interval?
+                    other.Contains(min) || other.Contains(max));
         }
 
         public bool Encloses(Interval other)

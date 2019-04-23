@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TimeKit.DataStructure;
 using System.Linq;
 using TimeKit.Models;
@@ -7,6 +8,8 @@ namespace TimeKit.Scheduling
 {
     public class TKResourceRequestRow
     {
+        public int no { get; set; }
+
         public TKResourceRequestGroup Group { get; set; }
 
         public TkResourceRequest Request { get; set; }
@@ -48,7 +51,9 @@ namespace TimeKit.Scheduling
         // We have an array of responses for each row
         // For each response in the first row, we need to check every single response in all the other rows..
 
-        public List<((TKResourceRequestRow row, TKResourceResponse res), (TKResourceRequestRow row, TKResourceResponse res))> Compatible(TKResourceRequestRow other)
+        public List<((TKResourceRequestRow row, TKResourceResponse res), 
+            (TKResourceRequestRow row, TKResourceResponse res))> 
+            Compatible(TKResourceRequestRow other)
         {
             var compatible = new List<((TKResourceRequestRow row, TKResourceResponse res), (TKResourceRequestRow row, TKResourceResponse res))>();
             foreach (var response in Responses)
