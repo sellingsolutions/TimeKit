@@ -34,25 +34,21 @@ namespace TimeKit.Scheduling
         {
             // Each 
             var compatible = new List<((TKResourceRequestRow row, TKResourceResponse res), (TKResourceRequestRow row, TKResourceResponse res))>();
-            
-            for (var i = 0; i < Rows.Count(); i++)
+
+            var row = Rows[0];
+            for (var j = 1; j < Rows.Count(); j++)
             {
-                var row = Rows[i];
-                for(var j=1;j<Rows.Count()-1;j++)
+                var otherRow = Rows[j];
+
+                var compatibleResources = row.Compatible(otherRow);
+                compatible.AddRange(compatibleResources);
+
+                // If the current row is incompatible with any other row, we might as well abort immediately
+                if (!compatibleResources.Any())
                 {
-                    var otherRow = Rows[j];
-
-                    var compatibleResources = row.Compatible(otherRow);
-                    compatible.AddRange(compatibleResources);
-
-                    // If the current row is incompatible with any other row, we might as well abort immediately
-                    if (!compatibleResources.Any())
-                    {
-                        // All the rows have to be compatible!
-                        return null;
-                    }
+                    // All the rows have to be compatible!
+                    return null;
                 }
-
             }
 
             return compatible;
