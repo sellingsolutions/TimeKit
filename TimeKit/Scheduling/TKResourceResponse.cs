@@ -4,7 +4,7 @@ using TimeKit.Models;
 
 namespace TimeKit.Scheduling
 {
-    public class TKResourceResponse
+    public class TkResourceResponse
     {
         public TkActor Actor { get; set; }
         public TimeSet Busy { get; set; }
@@ -16,7 +16,7 @@ namespace TimeKit.Scheduling
             return Schedule.Count() > 0;
         }
 
-        public TKResourceResponse(TkActor actor, TimeSet busy, TimeSet vacancy, TimeSet schedule)
+        public TkResourceResponse(TkActor actor, TimeSet busy, TimeSet vacancy, TimeSet schedule)
         {
             Actor = actor;
             Busy = busy;
