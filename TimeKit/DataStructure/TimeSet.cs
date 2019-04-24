@@ -113,7 +113,7 @@ namespace TimeKit.DataStructure
 
         public override string ToString()
         {
-            return "{ " + string.Join("; ", _intervals.Select(o => $"[{o.min}, {o.max}]")) + " }";
+            return "{ " + string.Join("; ", _intervals.Select(o => $"[{o.min}, {o.max}] \n")) + " } ";
         }
 
         public Interval ExtractInterval(TimeSpan timeSpan)
