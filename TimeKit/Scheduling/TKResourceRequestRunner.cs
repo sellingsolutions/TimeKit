@@ -26,22 +26,23 @@ namespace TimeKit.Scheduling
         public IEnumerable<TkIProcess> Busy { get; set; }
 
         public TKResourceRequestRunner(
+            TkResourceRequestSolutionGroup group,
             TkResourceRequest request, 
             TkActor actor,
             IEnumerable<TkProcess> processes)
         {
             RoleType                = request.RoleType;
             RequiredCapability      = request.RequiredCapability;
-            ObjectType              = request.ObjectType;
-            NoOfObjects             = request.NoOfObjects;
-            TimeSpanPerObject       = TimeSpan.FromMinutes(request.MinutesRequiredPerObject);
-            WeekNumbers             = request.WeekNumbers;
+            ObjectType              = group.ObjectType;
+            NoOfObjects             = group.NoOfObjects;
+            TimeSpanPerObject       = TimeSpan.FromMinutes(group.MinutesRequiredPerObject);
+            WeekNumbers             = group.WeekNumbers;
 
             Actor = actor;
             Busy = processes;
         }
         
-        public TKResourceResponse Run()
+        public TkResourceResponse Run()
         {
             var totalBusy = GetTotalBusy();
             var totalVacancy = GetTotalVacancy();
@@ -55,7 +56,7 @@ namespace TimeKit.Scheduling
             if (schedule.IsNull)
                 return null;
 
-            return new TKResourceResponse(Actor, totalBusy, totalVacancy, schedule);
+            return new TkResourceResponse(Actor, totalBusy, totalVacancy, schedule);
         }
 
         private TimeSet TryScheduling(TimeSet vacancy, long noOfObjects, TimeSpan spanPerObject)
