@@ -9,60 +9,23 @@ namespace TimeKit.Scheduling
     {
         public TkIRoleType RoleType { get; set; }
         public TkICapability RequiredCapability { get; set; }
-        public TkIObjectType ObjectType { get; set; }
-        public long NoOfObjects { get; set; }
-        public long MinutesRequiredPerObject { get; set; }
-        public List<long> WeekNumbers { get; set; }
-
-        public List<TkActor> AvailableActors { get; set; }
-        public List<TkProcess> AvailableProcesses { get; set; }
-
-        public TimeSpan TicksRequired => TimeSpan.FromMinutes(MinutesRequiredPerObject * NoOfObjects);
+        
 
         public TkResourceRequest()
         {
 
         }
 
-        public TkResourceRequest(
-            TkIRoleType roleType, 
-            TkICapability capability, 
-            TkIObjectType objectType, 
-            long noOfObjects, 
-            long minutesRequiredPerObject,
-            List<long> weekNumbers,
-            List<TkActor> availableActors,
-            List<TkProcess> availableProcesses)
+        public TkResourceRequest(TkIRoleType roleType, TkICapability capability)
         {
             RoleType = roleType;
             RequiredCapability = capability;
-            ObjectType = objectType;
-            NoOfObjects = noOfObjects;
-            MinutesRequiredPerObject = minutesRequiredPerObject;
-            WeekNumbers = weekNumbers;
-
-            AvailableActors = availableActors;
-            AvailableProcesses = availableProcesses;
         }
 
-        public bool IsValid ()
+        public bool IsValid()
         {
-            if (AvailableActors == null ||
-                AvailableProcesses == null ||
-                RoleType == null ||
-                RequiredCapability == null ||
-                NoOfObjects == 0 || 
-                MinutesRequiredPerObject == 0 || 
-                WeekNumbers == null)
-            {
-                return false;
-            }
-
-            return AvailableActors.Any() && 
-                   AvailableProcesses.Any() && 
-                   WeekNumbers.Any();
+            return RoleType != null && RequiredCapability != null;
         }
 
-        
     }
 }
