@@ -8,29 +8,42 @@ namespace TimeKit.Scheduling
 {
     public class TkResourceRequestSolutionRow
     {
-        public int no { get; set; }
+        public int Id { get; set; }
 
         public TkResourceRequestSolutionGroup Group { get; set; }
 
         public TkResourceRequest Request { get; set; }
         public List<TkResourceResponse> Responses { get; set; }
 
-        public TkResourceRequestSolutionRow(TkResourceRequest request, List<TkResourceResponse> responses)
+        public TkResourceRequestSolutionRow(int id, TkResourceRequest request, List<TkResourceResponse> responses)
         {
+            Id = id; 
             Request = request;
             Responses = responses;
+
+            foreach (var response in Responses)
+            {
+                response.id = id;
+            }
         }
 
-        public static TkResourceRequestSolutionRow NewRow(TkResourceRequestSolutionGroup group, TkResourceRequest request)
+        public static TkResourceRequestSolutionRow NewRow(
+            TkResourceRequestSolutionGroup group, 
+            TkResourceRequest request)
         {
-            if (!request.IsValid())
+            if (!group.IsValid() || !request.IsValid())
                 return null;
 
-            var actors = group.AvailableActors.Where(o => o.Capabilities.Contains(request.RequiredCapability));
+            var actors = group.AvailableActors
+                            .Where(o => o.Capabilities
+                            .FirstOrDefault(c => c.Key == request.RequiredCapability.Key) != null);
+
             var responses = new List<TkResourceResponse>();
             foreach (var actor in actors)
             {
-                var processes = group.AvailableProcesses.Where(p => p.ParticipantId == actor.Key);
+                var processes = group.AvailableProcesses
+                    .Where(p => p.ParticipantId == actor.Key);
+
                 if (!processes.Any())
                     continue;
 
@@ -43,7 +56,7 @@ namespace TimeKit.Scheduling
                 responses.Add(response);
             }
 
-            var row = new TkResourceRequestSolutionRow(request, responses);
+            var row = new TkResourceRequestSolutionRow(group.Rows.Count() +1, request, responses);
             return row;
         }
     }

@@ -6,6 +6,8 @@ namespace TimeKit.Scheduling
 {
     public class TkResourceResponse
     {
+        public int id { get; set; }
+
         public TkActor Actor { get; set; }
         public TimeSet Busy { get; set; }
         public TimeSet Vacancy { get; set; }
@@ -16,7 +18,11 @@ namespace TimeKit.Scheduling
             return Schedule.Count() > 0;
         }
 
-        public TkResourceResponse(TkActor actor, TimeSet busy, TimeSet vacancy, TimeSet schedule)
+        public TkResourceResponse(
+            TkActor actor, 
+            TimeSet busy, 
+            TimeSet vacancy, 
+            TimeSet schedule)
         {
             Actor = actor;
             Busy = busy;

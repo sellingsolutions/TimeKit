@@ -47,6 +47,11 @@ namespace TimeKit.DataStructure
             return new TimeSet(copy);
         }
 
+        public IEnumerable<(DateTime, DateTime)> ToDateList()
+        {
+            return GetOrderedIntervals().Select(o => (o.min, o.max));
+        }
+
         public int Count()
         {
             if (IsEmpty())

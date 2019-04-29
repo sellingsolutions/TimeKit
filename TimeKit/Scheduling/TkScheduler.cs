@@ -14,7 +14,7 @@ namespace TimeKit.Scheduling
 
             for (var objectNo = 0; objectNo < group.NoOfObjects; objectNo++)
             {
-                var scheduledInterval = workSet.ExtractInterval(group.TicksRequiredPerObject);
+                var scheduledInterval = workSet.ExtractInterval(group.TimeSpanRequiredPerObject);
                 if (scheduledInterval.isNull)
                     return TimeSet.Null();
 

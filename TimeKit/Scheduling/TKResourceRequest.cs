@@ -24,7 +24,10 @@ namespace TimeKit.Scheduling
 
         public bool IsValid()
         {
-            return RoleType != null && RequiredCapability != null;
+            return RoleType != null && 
+                   RoleType.Key != null &&
+                   RequiredCapability != null &&
+                   RequiredCapability.Key != null;
         }
 
     }

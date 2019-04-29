@@ -10,14 +10,15 @@ namespace TimeKit.Models
         public string Key { get; set; }
         public string DisplayName { get; set; }
 
-        public IEnumerable<TkICapability> Capabilities { get; set; }
+        public IEnumerable<TkICapability> Capabilities { get; set; } = new List<TkICapability>();
 
         public TkActor(string key, string displayName, IEnumerable<TkICapability> capabilities)
         {
             Key = key;
             DisplayName = displayName;
-            Capabilities = capabilities;
+            Capabilities = capabilities ?? new List<TkICapability>();
         }
+
         public TkActor(string key, string displayName)
         {
             Key = key;
