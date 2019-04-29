@@ -15,48 +15,61 @@ namespace TimeKit.Scheduling
         public TkResourceRequest Request { get; set; }
         public List<TkResourceResponse> Responses { get; set; }
 
-        public TkResourceRequestSolutionRow(int id, TkResourceRequest request, List<TkResourceResponse> responses)
-        {
-            Id = id; 
-            Request = request;
-            Responses = responses;
+        public IEnumerable<TKResourceRequestRunner> RequestRunners { get; set; }
 
-            foreach (var response in Responses)
-            {
-                response.id = id;
-            }
+        public TkResourceRequestSolutionRow(
+            TkResourceRequest request,
+            IEnumerable<TKResourceRequestRunner> requestRunners,
+            int rowId)
+        {
+            Id = rowId; 
+            Request = request;
+            RequestRunners = requestRunners;
         }
 
-        public static TkResourceRequestSolutionRow NewRow(
-            TkResourceRequestSolutionGroup group, 
+        public IEnumerable<TkResourceResponse> RunRequests()
+        {
+            var responses = new List<TkResourceResponse>();
+            foreach (var requestRunner in RequestRunners)
+            {
+                var response = requestRunner.Run();
+                if (response == null)
+                    continue;
+
+                response.id = Id;
+                responses.Add(response);
+            }
+
+            Responses = responses;
+
+            return responses;
+        }
+
+
+        public static TkResourceRequestSolutionRow CreateRow(
+            TkResourceRequestSolutionGroup group,
             TkResourceRequest request)
         {
-            if (!group.IsValid() || !request.IsValid())
+            if (!request.IsValid())
                 return null;
 
-            var actors = group.AvailableActors
-                            .Where(o => o.Capabilities
-                            .FirstOrDefault(c => c.Key == request.RequiredCapability.Key) != null);
-
-            var responses = new List<TkResourceResponse>();
+            var actors = group.AvailableActors.Where(o => o.Capabilities.Contains(request.RequiredCapability));
+            var runners = new List<TKResourceRequestRunner>();
             foreach (var actor in actors)
             {
-                var processes = group.AvailableProcesses
-                    .Where(p => p.ParticipantId == actor.Key);
-
+                var processes = group.AvailableProcesses.Where(p => p.ParticipantId == actor.Key);
                 if (!processes.Any())
                     continue;
 
                 var requestRunner = new TKResourceRequestRunner(group, request, actor, processes);
-                var response = requestRunner.Run();
-
-                if (response == null)
-                    continue;
-                
-                responses.Add(response);
+                runners.Add(requestRunner);
             }
 
-            var row = new TkResourceRequestSolutionRow(group.Rows.Count() +1, request, responses);
+            var row = new TkResourceRequestSolutionRow(
+                request,
+                runners,
+                group.Rows.Count() + 1);
+
             return row;
         }
     }

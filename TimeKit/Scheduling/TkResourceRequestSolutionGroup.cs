@@ -64,15 +64,16 @@ namespace TimeKit.Scheduling
         public void AddRow(TkResourceRequestSolutionRow row)
         {
             row.Group = this;
-            Rows.Add(row);
-            
+            Rows.Add(row);            
         }
 
         public void ReplaceRow(TkResourceRequestSolutionRow row1, TkResourceRequestSolutionRow row2)
         {
             var index = Rows.IndexOf(row1);
+            row1.Id = row2.Id;
             Rows[index] = row2;
         }
+
         
         /// <summary>
         /// Returns a list of solutions where each solution contains a list of actors and their mutual vacancies
