@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using TimeKit.DataStructure;
+﻿using System.Collections.Generic;
 using System.Linq;
-using TimeKit.Models;
 
 namespace TimeKit.Scheduling
 {
@@ -50,7 +47,7 @@ namespace TimeKit.Scheduling
             TkResourceRequestSolutionGroup group,
             TkResourceRequest request)
         {
-            if (!request.IsValid())
+            if (request == null || !request.IsValid())
                 return null;
 
             var actors = group.AvailableActors.Where(o => o.Capabilities.Contains(request.RequiredCapability));
@@ -58,8 +55,9 @@ namespace TimeKit.Scheduling
             foreach (var actor in actors)
             {
                 var processes = group.AvailableProcesses.Where(p => p.ParticipantId == actor.Key);
-                if (!processes.Any())
-                    continue;
+                // TODO: Why did I want to discard actors without processes?
+                //if (!processes.Any())
+                //    continue;
 
                 var requestRunner = new TKResourceRequestRunner(group, request, actor, processes);
                 runners.Add(requestRunner);

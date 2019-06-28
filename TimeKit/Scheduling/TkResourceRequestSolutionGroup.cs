@@ -92,6 +92,8 @@ namespace TimeKit.Scheduling
         /// <returns> A list of solutions </returns>
         public IEnumerable<TkSolution> Solve(int rowIndex = 0)
         {
+            var solutions = new List<TkSolution>();
+
             var currentRow = Rows[rowIndex];
 
             // base case, exits when we hit the last index
@@ -99,7 +101,7 @@ namespace TimeKit.Scheduling
             {
                 foreach (var response in currentRow.Responses)
                 {
-                    yield return new TkSolution(response.Vacancy, new[] { response });
+                    solutions.Add(new TkSolution(response.Vacancy, new[] { response }));
                 }
             }
 
@@ -136,10 +138,12 @@ namespace TimeKit.Scheduling
                         // Add the response and pass it on to the next row
                         responsesToPassOn[0] = responseFromCurrentRow;
 
-                        yield return new TkSolution(mutualVacancies, responsesToPassOn);
+                        solutions.Add(new TkSolution(mutualVacancies, responsesToPassOn));
                     }
                 }
             }
+
+            return solutions;
         }
     }
 }

@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace TimeKit.Models
 {
     public interface TkIActor
     {
+        ulong Id { get; set; }
         string Key { get; set; }
         string DisplayName { get; set; }
 
