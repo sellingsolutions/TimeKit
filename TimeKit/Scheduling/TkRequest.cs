@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using TimeKit.DataStructure;
 using TimeKit.Models;
 
 namespace TimeKit.Scheduling
@@ -15,8 +15,9 @@ namespace TimeKit.Scheduling
         // All available actor processes
         public IEnumerable<TkProcess> Busy { get; set; }
 
-        // The schedule has to fit within these date intervals
-        public IEnumerable<TkInterval> RequiredIntervals { get; set; }
+        // The schedule has to fit within this date interval
+        public DateTime ScheduleStartsAt { get; set; }
+        public DateTime ScheduleEndsAt { get; set; }
 
         // All the tasks that need to be scheduled
         public IEnumerable<TkTask> Tasks { get; set; }
@@ -29,14 +30,16 @@ namespace TimeKit.Scheduling
         }
 
         public TkRequest(
+            DateTime scheduleStartsAt,
+            DateTime scheduleEndsAt,
             IEnumerable<TkActor> actors, 
             IEnumerable<TkProcess> busy, 
-            IEnumerable<TkInterval> requiredIntervals,
             IEnumerable<TkTask> tasks)
         {
+            ScheduleStartsAt = scheduleStartsAt;
+            ScheduleEndsAt = scheduleEndsAt;
             Actors = actors;
             Busy = busy;
-            RequiredIntervals = requiredIntervals;
             Tasks = tasks;
 
             TotalTicksRequired = tasks.Sum(o => (o.EndsAt - o.StartsAt).Ticks);
@@ -44,9 +47,10 @@ namespace TimeKit.Scheduling
 
         public bool IsValid()
         {
-            return Actors != null && 
+            return ScheduleStartsAt != DateTime.MinValue &&
+                   ScheduleEndsAt != DateTime.MinValue &&
+                   Actors != null && 
                    Busy != null &&
-                   RequiredIntervals != null &&
                    Tasks != null;
         }
 

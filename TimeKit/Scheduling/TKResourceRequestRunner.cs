@@ -25,32 +25,19 @@ namespace TimeKit.Scheduling
             {
                 var busyProcesses = Request.Busy.Where(o => o.ParticipantId == actor.Key);
 
-                var totalBusy = new TkTimeSet();
-                var totalVacancy = new TkTimeSet();
+                var busy = GetBusy(busyProcesses, Request.ScheduleStartsAt, Request.ScheduleEndsAt);
+                var vacancy = GetVacancy(Request.ScheduleStartsAt, Request.ScheduleEndsAt, busy, Request.WorkWeekConfig);
 
-                foreach (var requestedInterval in Request.RequiredIntervals)
-                {
-                    var intervalStartsAt = requestedInterval.start;
-                    var intervalEndsAt = requestedInterval.end;
-
-                    var busy = GetBusy(busyProcesses, intervalStartsAt, intervalEndsAt);
-                    totalBusy = TkTimeSet.Union(totalBusy, busy);
-
-                    var vacancy = GetVacancy(intervalStartsAt, intervalEndsAt, busy, Request.WorkWeekConfig);
-                    totalVacancy = TkTimeSet.Union(totalVacancy, vacancy);
-                }
-                
-
-                var totalTicksVacant = totalVacancy.Ticks();
+                var totalTicksVacant = vacancy.Ticks();
 
                 if (Request.TotalTicksRequired >= totalTicksVacant)
                     return null;
 
-                var schedule = TryScheduling(Request.Tasks, totalVacancy);
+                var schedule = TryScheduling(Request.Tasks, vacancy);
                 if (schedule.IsNull)
                     return null;
 
-               responses.Add(new TkResourceResponse(actor, totalBusy, totalVacancy, schedule));
+               responses.Add(new TkResourceResponse(actor, busy, vacancy, schedule));
             }
 
             return responses;

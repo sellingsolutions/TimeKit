@@ -21,26 +21,19 @@ namespace TimeKit.Scheduling
             Request = request;
             Responses = responses;
         }
-
-       
-
-        public static TkResourceRequestSolutionRow CreateRow(
-            TkResourceRequestSolutionGroup group,
-            TkRequest request)
+        
+        public static TkResourceRequestSolutionRow CreateRow(TkRequest request)
         {
             if (request == null || !request.IsValid())
                 return null;
 
             var requestRunner = new TKResourceRequestRunner(request);
-            
-
-            // TODO: Do we really need rows and groups in TimeKit?
-            // Can we just run the request, get the responses, check which ones can be scheduled together and return that?
+            var responses = requestRunner.Run();
 
             var row = new TkResourceRequestSolutionRow(
                 request,
-                runners,
-                group.Rows.Count() + 1);
+                responses,
+                1);
 
             return row;
         }

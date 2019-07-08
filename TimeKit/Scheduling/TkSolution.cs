@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using TimeKit.DataStructure;
 
 namespace TimeKit.Scheduling
@@ -10,12 +7,16 @@ namespace TimeKit.Scheduling
     {
         // When all of the actors in the responses array can work together
         public TkTimeSet MutualVacancy { get; set; }
+
+        public TkRequest Request { get; set; }
+
         // Enumerates all of the actors and their respective vacancies
         public TkResourceResponse[] Responses { get; set; }
 
-        public TkSolution(TkTimeSet mutualVacancy, TkResourceResponse[] responses)
+        public TkSolution(TkTimeSet mutualVacancy, TkRequest request, TkResourceResponse[] responses)
         {
             MutualVacancy = mutualVacancy;
+            Request = request;
             Responses = responses;
         }
 

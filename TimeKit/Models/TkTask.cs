@@ -14,7 +14,7 @@ namespace TimeKit.Models
 
         public TimeSpan Duration => EndsAt - StartsAt;
 
-        // An external id that this task points to, e.g. the inspection instance (Besiktningstillfälle)
+        // An external Id that this task points to, e.g. the inspection instance (Besiktningstillfälle)
         public ulong Id { get; set; }
 
         public TkInterval ScheduledInterval { get; set; }

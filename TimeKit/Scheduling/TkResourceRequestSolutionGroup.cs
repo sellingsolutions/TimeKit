@@ -2,74 +2,28 @@
 using System.Collections.Generic;
 using System.Linq;
 using TimeKit.DataStructure;
-using TimeKit.Models;
 
 namespace TimeKit.Scheduling
 {
     public class TkResourceRequestSolutionGroup
     {
-        public int id { get; set; }
-
-        public TkObjectType ObjectType { get; set; }
-        public List<long> WeekNumbers { get; set; }
-
-        public long NoOfObjects { get; set; }
-        public long MinutesRequiredPerObject { get; set; }
-
-        public TimeSpan TimeSpanRequiredPerObject => TimeSpan.FromMinutes(MinutesRequiredPerObject);
-        public long TicksRequiredPerObject => TimeSpanRequiredPerObject.Ticks;
-
-        public long TotalTicksRequired => TimeSpan.FromMinutes(MinutesRequiredPerObject * NoOfObjects).Ticks;
-
-        public List<TkActor> AvailableActors { get; set; }
-        public List<TkProcess> AvailableProcesses { get; set; }
+        public int Id { get; set; }
+        
+        public TkRequest Request { get; set; }
 
         public List<TkResourceRequestSolutionRow> Rows { get; set; } = new List<TkResourceRequestSolutionRow>();
 
-        public TkResourceRequestSolutionGroup(
-            TkObjectType objectType, 
-            long noOfObjects, 
-            long minutesRequiredPerObject, 
-            List<long> weekNumbers, 
-            List<TkActor> availableActors, 
-            List<TkProcess> availableProcesses)
-        {
-
-            ObjectType = objectType;
-            NoOfObjects = noOfObjects;
-            MinutesRequiredPerObject = minutesRequiredPerObject;
-            WeekNumbers = weekNumbers;
-            AvailableActors = availableActors;
-            AvailableProcesses = availableProcesses;
-        }
-
         public bool IsValid()
         {
-            if (AvailableActors == null ||
-                AvailableProcesses == null ||
-                NoOfObjects == 0 ||
-                MinutesRequiredPerObject == 0 ||
-                WeekNumbers == null)
-            {
-                return false;
-            }
+    
 
-            return AvailableActors.Any() &&
-                   AvailableProcesses.Any() &&
-                   WeekNumbers.Any();
+            return true;
         }
 
         public void AddRow(TkResourceRequestSolutionRow row)
         {
             row.Group = this;
             Rows.Add(row);            
-        }
-
-        public void ReplaceRow(TkResourceRequestSolutionRow row1, TkResourceRequestSolutionRow row2)
-        {
-            var index = Rows.IndexOf(row1);
-            row1.Id = row2.Id;
-            Rows[index] = row2;
         }
 
         
@@ -99,7 +53,7 @@ namespace TimeKit.Scheduling
             {
                 foreach (var response in currentRow.Responses)
                 {
-                    solutions.Add(new TkSolution(response.Vacancy, new[] { response }));
+                    solutions.Add(new TkSolution(response.Vacancy, currentRow.Request, new[] { response }));
                 }
             }
 
@@ -117,11 +71,22 @@ namespace TimeKit.Scheduling
 
                         // The current row and the next row must have mutual vacancies
                         var mutualVacancies = TkTimeSet.Intersect(vacancyFromNextRow, vacancyFromCurrentRow);
+                        var mutualVacantIntervals = mutualVacancies.GetOrderedIntervals().ToList();
 
                         // Check that there's sufficient overlap in vacancies
-                        if (mutualVacancies.GetOrderedIntervals()
-                                .Where(o => o.Length().Ticks >= TicksRequiredPerObject)
-                                .Sum(o => o.Length().Ticks) < TotalTicksRequired)
+                        long vacantTicks = 0;
+                        foreach (var task in Request.Tasks)
+                        {
+                            var vacantSlot = mutualVacantIntervals
+                                .FirstOrDefault(o => o.Length().Ticks >= task.Duration.Ticks);
+
+                            if (vacantSlot != null)
+                            {
+                                vacantTicks += vacantSlot.Length().Ticks;
+                                mutualVacantIntervals.Remove(vacantSlot);
+                            }
+                        }
+                        if (vacantTicks <= Request.TotalTicksRequired)
                             continue;
 
                         var responsesToPassOn = new TkResourceResponse[responsesFromNextRow.Length + 1];
@@ -136,7 +101,7 @@ namespace TimeKit.Scheduling
                         // Add the response and pass it on to the next row
                         responsesToPassOn[0] = responseFromCurrentRow;
 
-                        solutions.Add(new TkSolution(mutualVacancies, responsesToPassOn));
+                        solutions.Add(new TkSolution(mutualVacancies, currentRow.Request, responsesToPassOn));
                     }
                 }
             }

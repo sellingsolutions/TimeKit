@@ -6,14 +6,14 @@ namespace TimeKit.Scheduling
 {
     public class TkScheduler
     {
-        public static TkTimeSet Schedule(long noOfObjects, TimeSpan timeSpanPerObject, TkTimeSet vacancy)
+        public static TkTimeSet Schedule(TkSolution solution)
         {
             var scheduledIntervals = new List<TkInterval>();
-            var workSet = vacancy.Copy();
+            var workSet = solution.MutualVacancy.Copy();
 
-            for (var objectNo = 0; objectNo < noOfObjects; objectNo++)
+            foreach (var task in solution.Request.Tasks)
             {
-                var scheduledInterval = workSet.ExtractInterval(timeSpanPerObject);
+                var scheduledInterval = workSet.ExtractInterval(task.Duration);
                 if (scheduledInterval.isNull)
                     return TkTimeSet.Null();
 
