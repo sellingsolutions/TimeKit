@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TimeKit.DataStructure;
 using TimeKit.Models;
 
@@ -78,15 +76,15 @@ namespace TimeKit.Scheduling
         /// <summary>
         /// Returns a list of solutions where each solution contains a list of actors and their mutual vacancies
         ///
+        /// THIS ALGORITHM ONLY RETURNS SOLUTIONS WHERE THE ACTORS CAN BE SCHEDULED AT THE EXACT SAME TIME
         /// 
         /// The recursive algorithm below simply iterates each row(role) and its responses
         /// 1. Checks if the response vacancy can hold the TicksRequired, if not skip that response
-        /// 2. Makes sure that we're not assigning the same actor to different roles (Will be changed!)
-        /// 3. Passes the vacancy on to the next row
+        /// 2. Passes the vacancy on to the next row
         ///
         /// Each pass runs an intersection on the previous row's vacancy and the current row's vacancy
         /// Once we've passed through all of the rows, we will have the intersection between all of the row vacancies
-        /// Which means that we'll have a TimeSet that holds the mutual vacancies for the resources that can perform the required roles 
+        /// Which means that we'll have a TkTimeSet that holds the mutual vacancies for the resources that can perform the required roles 
         /// 
         /// </summary>
         /// <returns> A list of solutions </returns>
@@ -115,16 +113,16 @@ namespace TimeKit.Scheduling
 
                     foreach (var responseFromCurrentRow in currentRow.Responses)
                     {
-                        // 1. Check that there's sufficient overlap in vacancies.
+                        var vacancyFromCurrentRow = responseFromCurrentRow.Vacancy;
+
                         // The current row and the next row must have mutual vacancies
-                        var mutualVacancies = TimeSet.Intersect(vacancyFromNextRow, responseFromCurrentRow.Vacancy);
-                        if (mutualVacancies.GetOrderedIntervals().Where(o => o.Length().Ticks >= TicksRequiredPerObject)
+                        var mutualVacancies = TkTimeSet.Intersect(vacancyFromNextRow, vacancyFromCurrentRow);
+
+                        // Check that there's sufficient overlap in vacancies
+                        if (mutualVacancies.GetOrderedIntervals()
+                                .Where(o => o.Length().Ticks >= TicksRequiredPerObject)
                                 .Sum(o => o.Length().Ticks) < TotalTicksRequired)
                             continue;
-
-                        // 2. Check that we don't reuse the same actor twice.
-                        // if (responsesFromNextRow.Any(o => o.Actor == responseFromCurrentRow.Actor))
-                        //    continue;
 
                         var responsesToPassOn = new TkResourceResponse[responsesFromNextRow.Length + 1];
 

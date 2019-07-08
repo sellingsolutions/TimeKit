@@ -1,16 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TimeKit.Extensions
 {
 
     public static class DateTimeExtensions
     {
-        public static int WeekNumber(this System.DateTime? value)
+        public static DateTime GetMonday(this DateTime value)
+        {
+            var date = value;
+            while (date.DayOfWeek != DayOfWeek.Monday)
+            {
+                date = date.AddDays(-1);
+            }
+
+            return date;
+        }
+
+        public static int WeekNumber(this DateTime? value)
         {
             if (value == null)
             {

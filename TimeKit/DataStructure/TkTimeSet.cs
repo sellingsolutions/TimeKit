@@ -1,55 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TimeKit.Extensions;
+using TimeKit.Models;
 
 namespace TimeKit.DataStructure
 {
-    public struct TimeSet
+    public struct TkTimeSet
     {
         public bool IsNull;
         public string Id;
-        // 1. no directly adjacent intervals
-        // 2. intervals sorted by ascending min
-        // 3. intervals do not overlap
-        private Interval[] _intervals;
+        // 1. no directly adjacent tkIntervals
+        // 2. tkIntervals sorted by ascending start
+        // 3. tkIntervals do not overlap
+        private TkInterval[] _tkIntervals;
 
-        public static TimeSet Null()
+        public static TkTimeSet Null()
         {
-            var empty = new TimeSet(new Interval[0]);
+            var empty = new TkTimeSet(new TkInterval[0]);
             return empty;
         }
           
-        public TimeSet(Interval[] intervals)
+        public TkTimeSet(TkInterval[] tkIntervals)
         {
-            IsNull      = intervals.Length == 0;
+            IsNull      = tkIntervals.Length == 0;
             Id          = Guid.NewGuid().ToString();
-            _intervals  = intervals.OrderBy(o => o.min).ToArray();
+            _tkIntervals  = tkIntervals.OrderBy(o => o.start).ToArray();
         }
 
-        public Interval[]  GetOrderedIntervals()
+        public TkInterval[]  GetOrderedIntervals()
         {
-            return _intervals.OrderBy(o=>o.min).ToArray();
+            return _tkIntervals.OrderBy(o=>o.start).ToArray();
         }
 
-        public TimeSet Copy()
+        public TkTimeSet Copy()
         {
-            var copy = new Interval[_intervals.Length];
-            for (var i=0;i<_intervals.Length;i++)
+            var copy = new TkInterval[_tkIntervals.Length];
+            for (var i=0;i<_tkIntervals.Length;i++)
             {
-                var interval = _intervals[i];
-                copy[i] = new Interval(interval.min, interval.max);
+                var interval = _tkIntervals[i];
+                copy[i] = new TkInterval(interval.start, interval.end);
             }
 
-            return new TimeSet(copy);
+            return new TkTimeSet(copy);
         }
 
         public IEnumerable<(DateTime, DateTime)> ToDateList()
         {
-            return GetOrderedIntervals().Select(o => (o.min, o.max));
+            return GetOrderedIntervals().Select(o => (min: o.start, max: o.end));
         }
 
         public int Count()
@@ -57,12 +55,12 @@ namespace TimeKit.DataStructure
             if (IsEmpty())
                 return 0;
 
-            return _intervals.Count();
+            return _tkIntervals.Count();
         }
 
         public bool IsEmpty()
         {
-            return _intervals == null || !_intervals.Any();
+            return _tkIntervals == null || !_tkIntervals.Any();
         }
 
         public long Ticks ()
@@ -70,7 +68,7 @@ namespace TimeKit.DataStructure
             if (IsEmpty())
                 return 0;
 
-            var ticks = _intervals.Sum(interval => interval.Length().Ticks);
+            var ticks = _tkIntervals.Sum(interval => interval.Length().Ticks);
             return ticks;
         }
 
@@ -84,22 +82,22 @@ namespace TimeKit.DataStructure
             return Seconds() / 60;
         }
 
-        public void Remove(Interval interval)
+        public void Remove(TkInterval tkInterval)
         {
-            _intervals = _intervals.Where(o => o.id != interval.id).ToArray();
+            _tkIntervals = _tkIntervals.Where(o => o.id != tkInterval.id).ToArray();
         }
 
-        public Interval ElementAt(int index)
+        public TkInterval ElementAt(int index)
         {
             if (index >= Count())
-                return Interval.Null();
+                return TkInterval.Null();
 
-            return _intervals[index];
+            return _tkIntervals[index];
         }
 
-        public int indexOf(Interval interval)
+        public int indexOf(TkInterval tkInterval)
         {
-            if (string.IsNullOrEmpty(interval.id))
+            if (string.IsNullOrEmpty(tkInterval.id))
             {
                 return -1;
             }
@@ -107,7 +105,7 @@ namespace TimeKit.DataStructure
             for (var i = 0; i < Count(); i++)
             {
                 var _interval = ElementAt(i);
-                if (_interval.id == interval.id)
+                if (_interval.id == tkInterval.id)
                 {
                     return i;
                 }
@@ -118,21 +116,21 @@ namespace TimeKit.DataStructure
 
         public override string ToString()
         {
-            return "{ " + string.Join("; ", _intervals.Select(o => $"[{o.min}, {o.max}] \n")) + " } ";
+            return "{ " + string.Join("; ", _tkIntervals.Select(o => $"[{o.start}, {o.end}] \n")) + " } ";
         }
 
-        public Interval ExtractInterval(TimeSpan timeSpan)
+        public TkInterval ExtractInterval(TimeSpan timeSpan)
         {
             var orderedIntervals = GetOrderedIntervals();
             var intervalToExtractFrom = orderedIntervals.FirstOrDefault(o => o.Length() > timeSpan);
 
             if (intervalToExtractFrom.isNull)
             {
-                return Interval.Null();
+                return TkInterval.Null();
             }
 
             var index = indexOf(intervalToExtractFrom);
-            var extractedInterval = new Interval();
+            var extractedInterval = new TkInterval();
 
             if (index != -1)
             {
@@ -140,10 +138,10 @@ namespace TimeKit.DataStructure
 
                 intervalToExtractFrom.SubtractTimeSpan(timeSpan);
                 
-                var updatedInterval = new Interval() {
+                var updatedInterval = new TkInterval() {
                     id = intervalToExtractFrom.id,
-                    min = intervalToExtractFrom.min,
-                    max = intervalToExtractFrom.max
+                    start = intervalToExtractFrom.start,
+                    end = intervalToExtractFrom.end
                 };
 
                 // If we have less than 5 minutes left, remove it
@@ -153,20 +151,20 @@ namespace TimeKit.DataStructure
                 }
                 else
                 {
-                    _intervals[index] = updatedInterval;
-                    _intervals = GetOrderedIntervals();
+                    _tkIntervals[index] = updatedInterval;
+                    _tkIntervals = GetOrderedIntervals();
                 }
             }
 
             return extractedInterval;
         }
     
-        public static TimeSet For(DateTime min, DateTime max)
+        public static TkTimeSet For(DateTime min, DateTime max)
         {
-            return new TimeSet (new [] { new Interval ( min, max ) });
+            return new TkTimeSet (new [] { new TkInterval ( min, max ) });
         }
 
-        public static TimeSet ForWeek(long weekNumber)
+        public static TkTimeSet ForWeek(long weekNumber)
         {
             var min = DateTimeExtensions.GetFirstDayOfWeek(weekNumber);
             var max = min.AddDays(7);
@@ -178,26 +176,65 @@ namespace TimeKit.DataStructure
         private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
 
         // Returns 45 hours since we're not excluding the lunch hour
-        public static TimeSet WorkWeek(long weekNumber)
+        public static TkTimeSet WorkWeek(long weekNumber)
         {
-            var set = new TimeSet ( new Interval[5] );
+            var set = new TkTimeSet ( new TkInterval[5] );
             var day = DateTimeExtensions.GetFirstDayOfWeek(weekNumber);
             for (var i = 0; i < 5; i++)
             {
-                var startsAt = DateTime.SpecifyKind(new DateTime(day.Year, day.Month, day.Day, 6, 0, 0), DateTimeKind.Utc);
-                var endsAt = DateTime.SpecifyKind(new DateTime(day.Year, day.Month, day.Day, 15, 0, 0), DateTimeKind.Utc);
-                
-                set._intervals[i] = new Interval(startsAt, endsAt);
+                var workDay = WorkDay(day, TkWorkWeekConfig.Default);
+                set._tkIntervals[i] = workDay;
                 day = day.AddDays(1);
             }
             return set;
         }
 
+        public static TkTimeSet WorkWeeks(DateTime start, DateTime end, TkWorkWeekConfig config)
+        {
+            var intervals = new List<TkInterval>();
+            var current = start;
+            while (current <= end)
+            {
+                current = current.AddDays(1);
+
+                if (config.WorkDays.Contains(current.DayOfWeek))
+                {
+                    intervals.Add(WorkDay(current, config));
+                }
+
+            }
+
+            return new TkTimeSet(intervals.ToArray());
+        }
+
+        public static TkInterval WorkDay(DateTime day, TkWorkWeekConfig config)
+        {
+            var startsAt = DateTime.SpecifyKind(new DateTime(
+                day.Year, 
+                day.Month, 
+                day.Day, 
+                config.WorkDayStartHourUtc, 
+                0, 
+                0),
+                DateTimeKind.Utc);
+
+            var endsAt = DateTime.SpecifyKind(new DateTime(
+                day.Year, 
+                day.Month, 
+                day.Day, 
+                config.WorkDayStartHourUtc + config.WorkDayDuration, 
+                0, 
+                0), 
+                DateTimeKind.Utc);
+
+            return new TkInterval(startsAt, endsAt);
+        }
+
         #region Set Operations
 
-        public static TimeSet Intersect(TimeSet first, TimeSet second)
+        public static TkTimeSet Intersect(TkTimeSet first, TkTimeSet second)
         {
-            IEnumerable<Interval> intersect(TimeSet a, TimeSet b)
+            IEnumerable<TkInterval> intersect(TkTimeSet a, TkTimeSet b)
             {
                 int aIndex = 0, bIndex = 0;
                 while (aIndex < a.Count() &&
@@ -224,13 +261,13 @@ namespace TimeKit.DataStructure
                         yield return aInterval;
                         aIndex++;
                     }
-                    // If A and B are separate intervals
+                    // If A and B are separate tkIntervals
                     else
                     {
-                        var highestMin = Max(aInterval.min, bInterval.min);
-                        var lowestMax = Min(aInterval.max, bInterval.max);
+                        var highestMin = Max(aInterval.start, bInterval.start);
+                        var lowestMax = Min(aInterval.end, bInterval.end);
 
-                        var interval = new Interval(highestMin, lowestMax);
+                        var interval = new TkInterval(highestMin, lowestMax);
                         if (interval.Length() > TimeSpan.Zero)
                             yield return interval;
 
@@ -241,39 +278,39 @@ namespace TimeKit.DataStructure
             }
 
             var intersection = intersect(first, second).ToArray();
-            return new TimeSet(intersection);
+            return new TkTimeSet(intersection);
         }
 
         // The complement of B, ∁B. Is everything that's outside of B
-        public static TimeSet Complement(TimeSet set)
+        public static TkTimeSet Complement(TkTimeSet set)
         {
-            IEnumerable<Interval> complement(TimeSet s)
+            IEnumerable<TkInterval> complement(TkTimeSet s)
             {
                 var t0 = DateTime.MinValue;
                 foreach (var interval in s.GetOrderedIntervals())
                 {
-                    var t1 = interval.min;
+                    var t1 = interval.start;
                     if ((t0 - t1).Ticks != 0)
                     {
-                        var complementInterval = new Interval(t0, t1);
+                        var complementInterval = new TkInterval(t0, t1);
                         yield return complementInterval;
                     }
-                    t0 = interval.max;
+                    t0 = interval.end;
                 }
 
                 if ((DateTime.MaxValue - t0).Ticks != 0)
                 {
-                    var lastInterval = new Interval(t0, DateTime.MaxValue);
+                    var lastInterval = new TkInterval(t0, DateTime.MaxValue);
                     yield return lastInterval;
                 }
             }
 
             var complementSet = complement(set).ToArray();
-            return new TimeSet(complementSet);
+            return new TkTimeSet(complementSet);
         }
 
         // A - B equals the intersection between A and the complement of B
-        public static TimeSet Difference(TimeSet a, TimeSet b)
+        public static TkTimeSet Difference(TkTimeSet a, TkTimeSet b)
         {
             // A - B = A ∩ ∁B
             var bComplement = Complement(b);
@@ -281,35 +318,35 @@ namespace TimeKit.DataStructure
             return diff;
         }
 
-        // Does not join overlapping intervals
-        // if an interval in A already contains the space made up by an interval in B, it'll be ignored
-        public static TimeSet Union(TimeSet a, TimeSet b)
+        // Does not join overlapping tkIntervals
+        // if an tkInterval in A already contains the space made up by an tkInterval in B, it'll be ignored
+        public static TkTimeSet Union(TkTimeSet a, TkTimeSet b)
         {
             if (b.IsNull || b.IsEmpty())
                 return a;
             if (a.IsNull || a.IsEmpty())
                 return b;
 
-            // The size of the union between a and b will at max be a.count + b.count
-            var union = new Interval[a.Count() + b.Count()];
+            // The size of the union between a and b will at end be a.count + b.count
+            var union = new TkInterval[a.Count() + b.Count()];
             var unionIndex = a.Count();
 
             // Set the union equal to A
-            for (var i = 0; i < a._intervals.Length; i++)
+            for (var i = 0; i < a._tkIntervals.Length; i++)
             {
-                union[i] = a._intervals[i];
+                union[i] = a._tkIntervals[i];
             }
 
-            // Only insert intervals from B into the union
-            // if no interval in A claims that space 
-            for (var i = 0; i < b._intervals.Length; i++)
+            // Only insert tkIntervals from B into the union
+            // if no tkInterval in A claims that space 
+            for (var i = 0; i < b._tkIntervals.Length; i++)
             {
-                var bInterval = b._intervals[i];
+                var bInterval = b._tkIntervals[i];
                 var exists = false;
 
-                for (var j = 0; j < a._intervals.Length; j++)
+                for (var j = 0; j < a._tkIntervals.Length; j++)
                 {
-                    var aInterval = a._intervals[j];
+                    var aInterval = a._tkIntervals[j];
                     if (aInterval.Contains(bInterval))
                     {
                         exists = true;
@@ -324,35 +361,35 @@ namespace TimeKit.DataStructure
                 }
             }
 
-            return new TimeSet(union);
+            return new TkTimeSet(union);
         }
 
         #endregion
 
 
-        public static bool operator ==(TimeSet a, TimeSet b)
+        public static bool operator ==(TkTimeSet a, TkTimeSet b)
         {
-            if (a._intervals.Length != b._intervals.Length)
+            if (a._tkIntervals.Length != b._tkIntervals.Length)
                 return false;
-            for (var i = 0; i < a._intervals.Length; i++)
+            for (var i = 0; i < a._tkIntervals.Length; i++)
             {
-                var aInterval = a._intervals[i];
-                var bInterval = b._intervals[i];
-                if (aInterval.min != bInterval.min ||
-                    aInterval.max != bInterval.max)
+                var aInterval = a._tkIntervals[i];
+                var bInterval = b._tkIntervals[i];
+                if (aInterval.start != bInterval.start ||
+                    aInterval.end != bInterval.end)
                     return false;
             }
             return true;
         }
 
-        public static bool operator !=(TimeSet a, TimeSet b)
+        public static bool operator !=(TkTimeSet a, TkTimeSet b)
         {
             return !(a == b);
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is TimeSet ts)
+            if (obj is TkTimeSet ts)
             {
                 return Id == ts.Id;
             }

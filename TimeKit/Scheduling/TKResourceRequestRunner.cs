@@ -1,120 +1,113 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using TimeKit.DataStructure;
-using TimeKit.Models;
 using System.Linq;
+using TimeKit.DataStructure;
 using TimeKit.Extensions;
+using TimeKit.Models;
 
 namespace TimeKit.Scheduling
 {
     public class TKResourceRequestRunner
     {
-        public TkIRoleType RoleType { get; set; }
-        public TkICapability RequiredCapability { get; set; }
-        public TkIObjectType ObjectType { get; set; }
 
-        public long NoOfObjects { get; set; }
-        public TimeSpan TimeSpanPerObject { get; set; }
-        public long TotalTicksNeeded => TimeSpanPerObject.Ticks * NoOfObjects;
+        public TkRequest Request { get; set; }
 
-        public List<long> WeekNumbers { get; set; }
-
-        // The resource and its busy processes..
-        public TkActor Actor { get; set; }
-        public IEnumerable<TkIProcess> Busy { get; set; }
-
-        public TKResourceRequestRunner(
-            TkResourceRequestSolutionGroup group,
-            TkResourceRequest request, 
-            TkActor actor,
-            IEnumerable<TkProcess> processes)
+        public TKResourceRequestRunner(TkRequest request)
         {
-            RoleType                = request.RoleType;
-            RequiredCapability      = request.RequiredCapability;
-            ObjectType              = group.ObjectType;
-            NoOfObjects             = group.NoOfObjects;
-            TimeSpanPerObject       = TimeSpan.FromMinutes(group.MinutesRequiredPerObject);
-            WeekNumbers             = group.WeekNumbers;
-
-            Actor = actor;
-            Busy = processes;
+            Request = request;
         }
         
-        public TkResourceResponse Run()
+        public IEnumerable<TkResourceResponse> Run()
         {
-            var totalBusy = GetTotalBusy();
-            var totalVacancy = GetTotalVacancy();
+            var responses = new List<TkResourceResponse>();
 
-            var totalTicksVacant = totalVacancy.Ticks();
+            foreach (var actor in Request.Actors)
+            {
+                var busyProcesses = Request.Busy.Where(o => o.ParticipantId == actor.Key);
 
-            if (TotalTicksNeeded >= totalTicksVacant)
-                return null;
+                var totalBusy = new TkTimeSet();
+                var totalVacancy = new TkTimeSet();
 
-            var schedule = TryScheduling(totalVacancy, NoOfObjects, TimeSpanPerObject);
-            if (schedule.IsNull)
-                return null;
+                foreach (var requestedInterval in Request.RequiredIntervals)
+                {
+                    var intervalStartsAt = requestedInterval.start;
+                    var intervalEndsAt = requestedInterval.end;
 
-            return new TkResourceResponse(Actor, totalBusy, totalVacancy, schedule);
+                    var busy = GetBusy(busyProcesses, intervalStartsAt, intervalEndsAt);
+                    totalBusy = TkTimeSet.Union(totalBusy, busy);
+
+                    var vacancy = GetVacancy(intervalStartsAt, intervalEndsAt, busy, Request.WorkWeekConfig);
+                    totalVacancy = TkTimeSet.Union(totalVacancy, vacancy);
+                }
+                
+
+                var totalTicksVacant = totalVacancy.Ticks();
+
+                if (Request.TotalTicksRequired >= totalTicksVacant)
+                    return null;
+
+                var schedule = TryScheduling(Request.Tasks, totalVacancy);
+                if (schedule.IsNull)
+                    return null;
+
+               responses.Add(new TkResourceResponse(actor, totalBusy, totalVacancy, schedule));
+            }
+
+            return responses;
         }
 
-        private TimeSet TryScheduling(TimeSet vacancy, long noOfObjects, TimeSpan spanPerObject)
+        private TkTimeSet TryScheduling(IEnumerable<TkTask> tasks, TkTimeSet vacancy)
         {
-            var scheduledIntervals = new List<Interval>();
+            var scheduledIntervals = new List<TkInterval>();
             var workSet = vacancy.Copy();
 
-            for (var objectNo = 0; objectNo < noOfObjects; objectNo++)
+            foreach (var task in tasks)
             {
-                var scheduledInterval = workSet.ExtractInterval(spanPerObject);
+                var scheduledInterval = workSet.ExtractInterval(task.Duration);
                 if (scheduledInterval.isNull)
-                    return TimeSet.Null();
+                    return TkTimeSet.Null();
 
+                task.ScheduledInterval = scheduledInterval;
                 scheduledIntervals.Add(scheduledInterval);
             }
 
-            var schedule = new TimeSet(scheduledIntervals.ToArray());
+            var schedule = new TkTimeSet(scheduledIntervals.ToArray());
             return schedule;
         }
 
-        private TimeSet GetVacancy(long weekNumber)
+        private TkTimeSet GetVacancy(DateTime start, DateTime end, TkTimeSet busy, TkWorkWeekConfig config)
         {
-            var workWeekTs = TimeSet.WorkWeek(weekNumber);
-            var busyTs = GetBusy(weekNumber);
-            var vacancy = TimeSet.Difference(workWeekTs, busyTs);
+            var workWeeks = TkTimeSet.WorkWeeks(start, end, config);
+            var vacancy = TkTimeSet.Difference(workWeeks, busy);
             return vacancy;
         }
 
-        private TimeSet GetTotalVacancy()
+        private TkTimeSet GetVacancy(long weekNumber, TkTimeSet busy)
         {
-            var vacancy = new TimeSet();
-            foreach (var wNo in WeekNumbers)
-            {
-                var weekVacancy = GetVacancy(wNo);
-                vacancy = TimeSet.Union(vacancy, weekVacancy);
-            }
-
+            var workWeekTs = TkTimeSet.WorkWeek(weekNumber);
+            var vacancy = TkTimeSet.Difference(workWeekTs, busy);
             return vacancy;
         }
-
-        public TimeSet GetTotalBusy()
+        
+        private TkTimeSet GetBusy(IEnumerable<TkProcess> busyProcesses, DateTime start, DateTime end)
         {
-            var busy = new TimeSet();
-            foreach (var wNo in WeekNumbers)
-            {
-                var weekBusy = GetBusy(wNo);
-                busy = TimeSet.Union(busy, weekBusy);
-            }
-            return busy;
+            var busyTs = new TkTimeSet(busyProcesses
+                .Where(o=>o.StartsAt.HasValue && o.EndsAt.HasValue)
+                .Where(o=>o.StartsAt.Value >= start && o.EndsAt.Value <= end)
+                .Select(o=> new TkInterval(o.StartsAt.Value, o.EndsAt.Value))
+                .ToArray());
+
+            return busyTs;
         }
 
-        private TimeSet GetBusy(long weekNumber)
+        private TkTimeSet GetBusy(IEnumerable<TkProcess> busyProcesses, long weekNumber)
         {
-            var busyTs = new TimeSet(
-                Busy.Where(o=>o.StartsAt.HasValue && o.EndsAt.HasValue)
+            var busyTs = new TkTimeSet(
+                busyProcesses
+                    .Where(o=>o.StartsAt.HasValue && o.EndsAt.HasValue)
                     .Where(o => DateTimeExtensions.WeekNumber(o.StartsAt.Value) == weekNumber &&
                                 DateTimeExtensions.WeekNumber(o.EndsAt.Value) == weekNumber)
-                    .Select(o => new Interval(o.StartsAt.Value, o.EndsAt.Value))
+                    .Select(o => new TkInterval(o.StartsAt.Value, o.EndsAt.Value))
                     .ToArray());
             return busyTs;
         }

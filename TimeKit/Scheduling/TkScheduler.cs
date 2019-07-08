@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using TimeKit.DataStructure;
 
 namespace TimeKit.Scheduling
 {
     public class TkScheduler
     {
-        public static TimeSet Schedule(TkResourceRequestSolutionGroup group, TimeSet vacancy)
+        public static TkTimeSet Schedule(long noOfObjects, TimeSpan timeSpanPerObject, TkTimeSet vacancy)
         {
-            var scheduledIntervals = new List<Interval>();
+            var scheduledIntervals = new List<TkInterval>();
             var workSet = vacancy.Copy();
 
-            for (var objectNo = 0; objectNo < group.NoOfObjects; objectNo++)
+            for (var objectNo = 0; objectNo < noOfObjects; objectNo++)
             {
-                var scheduledInterval = workSet.ExtractInterval(group.TimeSpanRequiredPerObject);
+                var scheduledInterval = workSet.ExtractInterval(timeSpanPerObject);
                 if (scheduledInterval.isNull)
-                    return TimeSet.Null();
+                    return TkTimeSet.Null();
 
                 scheduledIntervals.Add(scheduledInterval);
             }
 
-            var schedule = new TimeSet(scheduledIntervals.ToArray());
+            var schedule = new TkTimeSet(scheduledIntervals.ToArray());
             return schedule;
         }
     }

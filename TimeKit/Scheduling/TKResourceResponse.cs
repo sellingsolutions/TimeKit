@@ -9,9 +9,9 @@ namespace TimeKit.Scheduling
         public int id { get; set; }
 
         public TkActor Actor { get; set; }
-        public TimeSet Busy { get; set; }
-        public TimeSet Vacancy { get; set; }
-        public TimeSet Schedule { get; set; }
+        public TkTimeSet Busy { get; set; }
+        public TkTimeSet Vacancy { get; set; }
+        public TkTimeSet Schedule { get; set; }
 
         public bool IsValid ()
         {
@@ -20,9 +20,9 @@ namespace TimeKit.Scheduling
 
         public TkResourceResponse(
             TkActor actor, 
-            TimeSet busy, 
-            TimeSet vacancy, 
-            TimeSet schedule)
+            TkTimeSet busy, 
+            TkTimeSet vacancy, 
+            TkTimeSet schedule)
         {
             Actor = actor;
             Busy = busy;

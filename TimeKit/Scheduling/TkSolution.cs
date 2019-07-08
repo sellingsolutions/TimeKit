@@ -9,11 +9,11 @@ namespace TimeKit.Scheduling
     public class TkSolution
     {
         // When all of the actors in the responses array can work together
-        public TimeSet MutualVacancy { get; set; }
+        public TkTimeSet MutualVacancy { get; set; }
         // Enumerates all of the actors and their respective vacancies
         public TkResourceResponse[] Responses { get; set; }
 
-        public TkSolution(TimeSet mutualVacancy, TkResourceResponse[] responses)
+        public TkSolution(TkTimeSet mutualVacancy, TkResourceResponse[] responses)
         {
             MutualVacancy = mutualVacancy;
             Responses = responses;
