@@ -33,7 +33,7 @@ namespace TimeKit.Scheduling
             var row = new TkResourceRequestSolutionRow(
                 request,
                 responses,
-                1);
+                -1);
 
             return row;
         }

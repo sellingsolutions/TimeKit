@@ -7,7 +7,7 @@ namespace TimeKit.Scheduling
 {
     public class TkRequest
     {
-        public TkWorkWeekConfig WorkWeekConfig { get; set; }
+        public TkWorkWeekConfig WorkWeekConfig { get; set; } = TkWorkWeekConfig.Default;
 
         // All available actors
         public IEnumerable<TkActor> Actors { get; set; }
@@ -42,16 +42,19 @@ namespace TimeKit.Scheduling
             Busy = busy;
             Tasks = tasks;
 
-            TotalTicksRequired = tasks.Sum(o => (o.EndsAt - o.StartsAt).Ticks);
+            TotalTicksRequired = tasks.Sum(o => (o.PlannedDuration));
         }
 
         public bool IsValid()
         {
-            return ScheduleStartsAt != DateTime.MinValue &&
-                   ScheduleEndsAt != DateTime.MinValue &&
-                   Actors != null && 
-                   Busy != null &&
-                   Tasks != null;
+            if (ScheduleStartsAt != DateTime.MinValue &&
+                ScheduleEndsAt != DateTime.MinValue &&
+                Actors != null &&
+                Busy != null &&
+                Tasks != null)
+                return Actors.Any() && Busy.Any() && Tasks.Any();
+
+            return false;
         }
 
     }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using TimeKit.DataStructure;
+using TimeKit.Models;
 
 namespace TimeKit.Scheduling
 {
@@ -9,9 +10,16 @@ namespace TimeKit.Scheduling
     {
         public int Id { get; set; }
         
-        public TkRequest Request { get; set; }
+        public IEnumerable<TkTask> Tasks { get; set; }
+        public long TotalTicksRequired { get; set; }
 
         public List<TkResourceRequestSolutionRow> Rows { get; set; } = new List<TkResourceRequestSolutionRow>();
+
+        public TkResourceRequestSolutionGroup(IEnumerable<TkTask> tasks)
+        {
+            Tasks = tasks;
+            TotalTicksRequired = tasks.Sum(o => o.PlannedDuration);
+        }
 
         public bool IsValid()
         {
@@ -75,7 +83,7 @@ namespace TimeKit.Scheduling
 
                         // Check that there's sufficient overlap in vacancies
                         long vacantTicks = 0;
-                        foreach (var task in Request.Tasks)
+                        foreach (var task in Tasks)
                         {
                             var vacantSlot = mutualVacantIntervals
                                 .FirstOrDefault(o => o.Length().Ticks >= task.Duration.Ticks);
@@ -86,7 +94,7 @@ namespace TimeKit.Scheduling
                                 mutualVacantIntervals.Remove(vacantSlot);
                             }
                         }
-                        if (vacantTicks <= Request.TotalTicksRequired)
+                        if (vacantTicks <= TotalTicksRequired)
                             continue;
 
                         var responsesToPassOn = new TkResourceResponse[responsesFromNextRow.Length + 1];

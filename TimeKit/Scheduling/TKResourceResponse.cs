@@ -6,7 +6,7 @@ namespace TimeKit.Scheduling
 {
     public class TkResourceResponse
     {
-        public int id { get; set; }
+        public int RowId { get; set; }
 
         public TkActor Actor { get; set; }
         public TkTimeSet Busy { get; set; }

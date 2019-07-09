@@ -13,7 +13,7 @@ namespace TimeKit.Scheduling
 
             foreach (var task in solution.Request.Tasks)
             {
-                var scheduledInterval = workSet.ExtractInterval(task.Duration);
+                var scheduledInterval = workSet.ExtractInterval(TimeSpan.FromTicks(task.PlannedDuration));
                 if (scheduledInterval.isNull)
                     return TkTimeSet.Null();
 
