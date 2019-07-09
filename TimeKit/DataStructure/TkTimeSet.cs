@@ -195,13 +195,12 @@ namespace TimeKit.DataStructure
             var current = start;
             while (current <= end)
             {
-                current = current.AddDays(1);
-
                 if (config.WorkDays.Contains(current.DayOfWeek))
                 {
                     intervals.Add(WorkDay(current, config));
                 }
 
+                current = current.AddDays(1);
             }
 
             return new TkTimeSet(intervals.ToArray());
