@@ -23,9 +23,7 @@ namespace TimeKit.Scheduling
 
         public bool IsValid()
         {
-    
-
-            return true;
+            return Tasks != null;
         }
 
         public void AddRow(TkResourceRequestSolutionRow row)
@@ -61,7 +59,8 @@ namespace TimeKit.Scheduling
             {
                 foreach (var response in currentRow.Responses)
                 {
-                    solutions.Add(new TkSolution(response.Vacancy, currentRow.Request, new[] { response }));
+                    var solution = new TkSolution(response.Vacancy, this, new[] { response });
+                    solutions.Add(solution);
                 }
             }
 
@@ -109,7 +108,8 @@ namespace TimeKit.Scheduling
                         // Add the response and pass it on to the next row
                         responsesToPassOn[0] = responseFromCurrentRow;
 
-                        solutions.Add(new TkSolution(mutualVacancies, currentRow.Request, responsesToPassOn));
+                        var solution = new TkSolution(mutualVacancies, this, responsesToPassOn);
+                        solutions.Add(solution);
                     }
                 }
             }
