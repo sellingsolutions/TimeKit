@@ -41,37 +41,17 @@ namespace TimeKit.Scheduling
                 if (Request.TotalTicksRequired >= totalTicksVacant)
                     continue;
 
-                var schedule = TryScheduling(Request.Tasks, vacancy);
+                var schedule = TkScheduler.TryScheduling(Request.Tasks, vacancy);
                 if (schedule.IsNull)
                     continue;
 
-               responses.Add(new TkResourceResponse(actor, busy, vacancy, schedule));
+               var response = new TkResourceResponse(actor, busy, vacancy, schedule);
+               responses.Add(response);
             }
-
-
-
+            
             return responses;
         }
-
-        private TkTimeSet TryScheduling(IEnumerable<TkTask> tasks, TkTimeSet vacancy)
-        {
-            var scheduledIntervals = new List<TkInterval>();
-            var workSet = vacancy.Copy();
-
-            foreach (var task in tasks)
-            {
-                var scheduledInterval = workSet.ExtractInterval(task.Duration);
-                if (scheduledInterval.isNull)
-                    return TkTimeSet.Null();
-
-                task.ScheduledInterval = scheduledInterval;
-                scheduledIntervals.Add(scheduledInterval);
-            }
-
-            var schedule = new TkTimeSet(scheduledIntervals.ToArray());
-            return schedule;
-        }
-
+        
         private TkTimeSet GetVacancy(DateTime start, DateTime end, TkTimeSet busy, TkWorkWeekConfig config)
         {
             var workWeeks = TkTimeSet.WorkWeeks(start, end, config);
