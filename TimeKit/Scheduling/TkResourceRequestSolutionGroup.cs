@@ -32,6 +32,28 @@ namespace TimeKit.Scheduling
             Rows.Add(row);            
         }
 
+        public IEnumerable<TkSolution> GetSolution(TkSolutionType type)
+        {
+            if (type == TkSolutionType.MutualSchedule)
+                return GetMutualSchedule();
+            else
+                return GetIndividualSchedule();
+        }
+
+        public IEnumerable<TkSolution> GetIndividualSchedule()
+        {
+            var solutions = new List<TkSolution>();
+            foreach (var row in Rows)
+            {
+                foreach (var response in row.Responses)
+                {
+                    var solution = new TkSolution(response.Vacancy, this, new[] { response });
+                    solutions.Add(solution);
+                }
+            }
+
+            return solutions;
+        }
         
         /// <summary>
         /// Returns a list of solutions where each solution contains a list of actors and their mutual vacancies
@@ -48,7 +70,7 @@ namespace TimeKit.Scheduling
         /// 
         /// </summary>
         /// <returns> A list of solutions </returns>
-        public IEnumerable<TkSolution> Solve(int rowIndex = 0)
+        public IEnumerable<TkSolution> GetMutualSchedule(int rowIndex = 0)
         {
             var solutions = new List<TkSolution>();
 
@@ -67,7 +89,7 @@ namespace TimeKit.Scheduling
             // recursive case, iterates all of the rows and their responses
             else
             {
-                foreach (var nextRowSolution in Solve(rowIndex + 1))
+                foreach (var nextRowSolution in GetMutualSchedule(rowIndex + 1))
                 {
                     var vacancyFromNextRow = nextRowSolution.MutualVacancy; 
                     var responsesFromNextRow = nextRowSolution.Responses;
